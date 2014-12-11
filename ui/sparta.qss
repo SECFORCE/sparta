@@ -1,0 +1,13 @@
+QTabBar::close-button {
+	image: url(./images/closetab-small.png);
+	height: 10px;
+	width: 10px;
+}
+
+QTabBar::close-button:hover {
+	image: url(./images/closetab-hover.png);
+}
+
+QTabBar::close-button:pressed {
+	image: url(./images/closetab-press.png);
+}
