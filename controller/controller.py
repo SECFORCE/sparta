@@ -568,7 +568,7 @@ class Controller():
 	def processCrashed(self, proc):
 		#self.processFinished(proc, True)
 		self.logic.storeProcessCrashStatusInDB(str(proc.id))
-		print 'process crashed!'
+		print '[+] Process killed!'
 		
 	# this function handles everything after a process ends
 	#def processFinished(self, qProcess, crashed=False):

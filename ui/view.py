@@ -50,7 +50,7 @@ class View(QtCore.QObject):
 		self.settingsWidget = AddSettingsDialog(self.ui.centralwidget)
 		self.helpWidget = QtWebKit.QWebView()
 		self.helpWidget.setWindowTitle('SPARTA Help')
-		self.helpWidget.load(QUrl('./help.html'))
+		self.helpWidget.load(QUrl('./doc/help.html'))
 		
 		self.ui.HostsTableView.setSelectionMode(1)						# disable multiple selection
 		self.ui.ServiceNamesTableView.setSelectionMode(1)
