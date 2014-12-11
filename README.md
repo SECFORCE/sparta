@@ -6,6 +6,7 @@ Authors:
 SECFORCE
 
   Antonio Quina (@st3r30byt3)
+
   Leonidas Stavliotis (@lstavliotis)
 
 
@@ -38,14 +39,18 @@ In Kali Linux these can be installed with:
 
     apt-get install nmap hydra cutycapt
 
+In Kali, to ensure that you have all the tools used by SPARTA's default configuration use:
+
+    apt-get install 
+
 Installation
 ----
 
-cd /usr/share/
-git clone https://github.com/secforce/sparta.git
+    cd /usr/share/
+    git clone https://github.com/secforce/sparta.git
 
-Place the "sparta" file in /usr/bin/ and make it executable.
-Type 'sparta' in any terminal to launch the application.
+    Place the "sparta" file in /usr/bin/ and make it executable.
+    Type 'sparta' in any terminal to launch the application.
 
 
 Source code
@@ -73,12 +78,12 @@ SPARTA uses a third-party tool called Cutycapt to take screenshots. One of the p
 
 It can be compiled in Kali by following these instructions:
 
-% sudo apt-get install subversion libqt4-webkit libqt4-dev g++
-% svn co svn://svn.code.sf.net/p/cutycapt/code/ cutycapt
-% cd cutycapt/CutyCapt
-% qmake
-% make
-% ./CutyCapt --url=http://www.example.org --out=example.png
+    % sudo apt-get install subversion libqt4-webkit libqt4-dev g++
+    % svn co svn://svn.code.sf.net/p/cutycapt/code/ cutycapt
+    % cd cutycapt/CutyCapt
+    % qmake
+    % make
+    % ./CutyCapt --url=http://www.example.org --out=example.png
 
 
 Credits
