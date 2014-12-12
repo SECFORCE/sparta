@@ -137,7 +137,7 @@ class AppSettings():
 		self.actions.setValue("telnet", ["Open with telnet", "telnet [IP] [PORT]", ""])
 		self.actions.setValue("ftp", ["Open with ftp client", "ftp [IP] [PORT]", "ftp"])
 		self.actions.setValue("mysql", ["Open with mysql client (as root)", "mysql -u root -h [IP] --port=[PORT] -p", "mysql"])
-		self.actions.setValue("mssql", ["Open with mssql client (as sa)", "/usr/local/bin/mssqlclient.py -p [PORT] sa@[IP]", "mys-sql-s,codasrv-se"])
+		self.actions.setValue("mssql", ["Open with mssql client (as sa)", "python /usr/share/doc/python-impacket-doc/examples/mssqlclient.py -p [PORT] sa@[IP]", "mys-sql-s,codasrv-se"])
 		self.actions.setValue("ssh", ["Open with ssh client (as root)", "ssh root@[IP] -p [PORT]", "ssh"])
 		self.actions.setValue("psql", ["Open with postgres client (as postgres)", "psql -h [IP] -p [PORT] -U postgres", "postgres"])
 		self.actions.setValue("rdesktop", ["Open with rdesktop", "rdesktop [IP]:[PORT]", "ms-wbt-server"])

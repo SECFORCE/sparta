@@ -41,7 +41,7 @@ In Kali Linux these can be installed with:
 
 In Kali, to ensure that you have all the tools used by SPARTA's default configuration use:
 
-    apt-get install 
+    apt-get install ldap-utils rwho rsh-client x11-apps finger
 
 Installation
 ----
@@ -61,6 +61,7 @@ The source code is structured in folders as such:
 * [app] 			   - Contains the functionality (logic) as well as the models used by both the logic and gui
 * [controller]	 - The controller interfaces between the gui and the logic (MVC design)
 * [db]			     - Contains everything related to database, database tables, etc
+* [doc]             - Contains all SPARTA documentation
 * [images] 		   - Icons and images
 * [parsers] 		 - Contains nmap xml output parser files
 * [scripts]		   - Contains custom scripts used by SPARTA
