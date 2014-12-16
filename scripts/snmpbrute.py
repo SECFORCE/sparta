@@ -241,7 +241,7 @@ def printout(text, colour=WHITE):
 ##########################################################################################################
 
 def banner():
-	print >> sys.stdout,  "SNMP Bruteforcer" + __version__
+	print >> sys.stdout,  "SNMP Bruteforcer " + __version__
 	print >> sys.stdout,  "http://www.secforce.com"
 	print >> sys.stdout, "###############################################################"
 	print >> sys.stdout,  ""
