@@ -18,8 +18,8 @@ from scapy.all import (SNMP, SNMPnext, SNMPvarbind, ASN1_OID, SNMPget, ASN1_DECO
 #	Defaults
 ##########################################################################################################
 class defaults:
-	rate=100.0
-	timeOut=1.0
+	rate=30.0
+	timeOut=2.0
 	port=161
 	delay=2
 	interactive=True
@@ -300,7 +300,7 @@ def SNMPsend(sock, packets, ip, port=defaults.port, community='', rate=defaults.
 def SNMPRequest(result,OID, value='', TimeOut=defaults.timeOut):
 	s = socket(AF_INET, SOCK_DGRAM)
 	s.settimeout(TimeOut)
-
+	response=''
 	r=result
 
 	version = SNMPVersion.iversion(r.version)
@@ -316,12 +316,16 @@ def SNMPRequest(result,OID, value='', TimeOut=defaults.timeOut):
 			)
 
 	SNMPsend(s,p,r.addr[0],r.addr[1],r.community)
-	try:
-		response,addr=SNMPrecv(s)
-	except timeout:
-		#printout('Nothing Received',YELLOW)
-		raise
+	for x in range(0, 5):
+		try:
+			response,addr=SNMPrecv(s)
+			break
+		except timeout:	# if request times out retry
+			sleep(0.5)
+			continue
 	s.close
+	if not response:
+		raise timeout
 	return response
 
 def testSNMPWrite(results,options,OID='.1.3.6.1.2.1.1.4.0'):
@@ -329,30 +333,34 @@ def testSNMPWrite(results,options,OID='.1.3.6.1.2.1.1.4.0'):
 
 	setval='HASH(0xDEADBEF)'
 	for r in results:
-		originalval=SNMPRequest(r,OID)
+		try:
+			originalval=SNMPRequest(r,OID)
 
-		if originalval:
-			originalval=originalval[SNMPvarbind].value.val
-			try:
+			if originalval:
+				originalval=originalval[SNMPvarbind].value.val
+
 				SNMPRequest(r,OID,setval)
-			except timeout:
-				pass
-			curval=SNMPRequest(r,OID)[SNMPvarbind].value.val
-			if curval == setval:
-				r.write=True
-				try:
-					SNMPRequest(r,OID,originalval)
-				except timeout:
-					pass
-				if options.verbose: printout (('\t %s (%s) (RW)' % (r.community,r.version)),GREEN)
 				curval=SNMPRequest(r,OID)[SNMPvarbind].value.val
-				if curval != originalval:
-					printout(('Couldn\'t restore value to: %s (OID: %s)' % (str(originalval),str(OID))),RED)
+
+				if curval == setval:
+					r.write=True
+					try:
+						SNMPRequest(r,OID,originalval)
+					except timeout:
+						pass
+					if options.verbose: printout (('\t %s (%s) (RW)' % (r.community,r.version)),GREEN)
+					curval=SNMPRequest(r,OID)[SNMPvarbind].value.val
+					if curval != originalval:
+						printout(('Couldn\'t restore value to: %s (OID: %s)' % (str(originalval),str(OID))),RED)
+				else:
+					if options.verbose: printout (('\t %s (%s) (R)' % (r.community,r.version)),BLUE)
 			else:
-				if options.verbose: printout (('\t %s (%s) (R)' % (r.community,r.version)),BLUE)
-		else:
+				r.write=None
+				printout (('\t %s (%s) (Failed)' % (r.community,r.version)),RED)
+		except timeout:
 			r.write=None
-			printout (('\t %s Response: %s' % (r.community,originalval)),RED)
+			printout (('\t %s (%s) (Failed!)' % (r.community,r.version)),RED)
+			continue
 
 def generic_snmpwalk(snmpwalk_args,oids):
 	for key, val in oids.items():
