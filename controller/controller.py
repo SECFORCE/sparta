@@ -654,15 +654,22 @@ class Controller():
 				#print '\tFound tool: ' + tool[0]
 				for a in self.settings.portActions:			
 					if tool[0] == a[1]:
-						restoring = False
-						tabtitle = a[1]+" ("+port+"/"+protocol+")"
-						outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
-						command = str(a[2])
-						command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
+						if tool[0] == "screenshooter":
+							url = ip+':'+port
+							self.screenshooter.addToQueue(url)
+						else:
+							restoring = False
+							tabtitle = a[1]+" ("+port+"/"+protocol+")"
+							outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
+							command = str(a[2])
+							command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
 
-						if 'nmap' in tabtitle:							# we don't want to show nmap tabs
-							restoring = True
+							if 'nmap' in tabtitle:							# we don't want to show nmap tabs
+								restoring = True
 
-						tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
-						self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
+							tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
+							self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
+						
 						break
+						
+			self.screenshooter.start()

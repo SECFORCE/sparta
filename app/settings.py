@@ -84,6 +84,7 @@ class AppSettings():
 
 		self.actions.beginGroup('PortActions')
 		self.actions.setValue("banner", ["Grab banner", "bash -c \"echo \"\" | nc -v -n -w1 [IP] [PORT]\"", ""])
+		self.actions.setValue("screenshooter", ["Take a webservice screenshot", "", ""])
 		self.actions.setValue("nmap", ["Run nmap (scripts) on port", "nmap -Pn -sV -sC -vvvvv -p[PORT] [IP] -oA [OUTPUT]", ""])
 		self.actions.setValue("nikto", ["Run nikto", "nikto -o [OUTPUT].txt -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
 		self.actions.setValue("dirbuster", ["Launch dirbuster", "java -Xmx256M -jar /usr/share/dirbuster/DirBuster-1.0-RC1.jar -u http://[IP]:[PORT]/", "http,https,ssl,soap,http-proxy,http-alt"])
@@ -151,6 +152,7 @@ class AppSettings():
 
 		self.actions.beginGroup('SchedulerSettings')
 		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt","tcp"])
+		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt","tcp"])
 		self.actions.setValue("smbenum",["microsoft-ds","tcp"])
 #		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
 #		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
