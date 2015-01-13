@@ -88,6 +88,7 @@ class AppSettings():
 		self.actions.setValue("nikto", ["Run nikto", "nikto -o [OUTPUT].txt -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
 		self.actions.setValue("dirbuster", ["Launch dirbuster", "java -Xmx256M -jar /usr/share/dirbuster/DirBuster-1.0-RC1.jar -u http://[IP]:[PORT]/", "http,https,ssl,soap,http-proxy,http-alt"])
 		self.actions.setValue("webslayer", ["Launch webslayer", "webslayer", "http,https,ssl,soap,http-proxy,http-alt"])
+		self.actions.setValue("whatweb", ["Fingerprint", "whatweb [IP]:[PORT] --color=never", "http,https,ssl,soap,http-proxy,http-alt"])
 		
 		### SMB
 		self.actions.setValue("samrdump", ["Run samrdump", "python /usr/share/doc/python-impacket-doc/examples/samrdump.py [IP] [PORT]/SMB", "netbios-ssn,microsoft-ds"])
