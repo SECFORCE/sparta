@@ -1,4 +1,4 @@
-SPARTA v1.0 BETA (http://sparta.secforce.com)
+SPARTA v1.0.1 BETA (http://sparta.secforce.com)
 ==
 
 Authors:
