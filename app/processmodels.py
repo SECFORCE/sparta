@@ -95,6 +95,42 @@ class ProcessesTableModel(QtCore.QAbstractTableModel):
 			for i in range(len(self.__processes)):
 				array.append(self.__processes[i]['tabtitle'])
 				
+		elif Ncol == 5:
+			for i in range(len(self.__processes)):
+				array.append(IP2Int(self.__processes[i]['hostip']))
+				
+		elif Ncol == 6:
+			for i in range(len(self.__processes)):
+				if self.__processes[i]['port'] == '':
+					return
+				else:
+					array.append(int(self.__processes[i]['port']))
+				
+		elif Ncol == 9:
+			for i in range(len(self.__processes)):
+				array.append(self.__processes[i]['starttime'])           
+
+		else:
+			for i in range(len(self.__processes)):
+				array.append(self.__processes[i]['status'])
+		
+		sortArrayWithArray(array, self.__processes)						# sort the services based on the values in the array
+
+		if order == Qt.AscendingOrder:									# reverse if needed
+			self.__processes.reverse()
+
+		self.__controller.updateProcessesIcon()							# to make sure the progress GIF is displayed in the right place
+			
+		self.emit(SIGNAL("layoutChanged()"))
+
+	def sort_old(self, Ncol, order):
+		self.emit(SIGNAL("layoutAboutToBeChanged()"))
+		array=[]
+		
+		if Ncol == 4:            
+			for i in range(len(self.__processes)):
+				array.append(self.__processes[i]['tabtitle'])
+				
 		if Ncol == 5:
 			for i in range(len(self.__processes)):
 				array.append(IP2Int(self.__processes[i]['hostip']))

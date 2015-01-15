@@ -1,0 +1,10 @@
+SPARTA 1.0.1 (BETA)
+
+* added tool rdp-sec-check.pl to rdp service (credit to Portcullis Labs - http://labs.portcullis.co.uk/application/rdp-sec-check/)
+* added tool WhatWeb to web services (thanks @_bcoles)
+* added the screenshooter to automated attacks (thanks @harmj0y)
+* added setting to run automated attacks after nmap imports (off by default)
+* fixed a unicode bug (thanks Dmitry Boomov)
+* fixed another unicode bug in the tool output
+* fixed bug in the sort function (thanks ad0nis)
+* added content to the help menu

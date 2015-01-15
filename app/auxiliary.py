@@ -11,7 +11,7 @@ Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
     You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os, sys, urllib2, socket, time, datetime, webbrowser, re			# for webrequests, screenshot timeouts, timestamps, browser stuff and regex
+import os, sys, urllib2, socket, time, datetime, locale, webbrowser, re	# for webrequests, screenshot timeouts, timestamps, browser stuff and regex
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import *												# for QProcess
 import errno															# temporary for isHttpd
@@ -34,6 +34,7 @@ def sortArrayWithArray(array, arrayToSort):
 
 # converts an IP address to an integer (for the sort function)
 def IP2Int(ip):
+	ip = ip.split("/")[0]			# bug fix: remove slash if it's a range
 	o = map(int, ip.split('.'))
 	res = (16777216 * o[0]) + (65536 * o[1]) + (256 * o[2]) + o[3]
 	return res
@@ -81,7 +82,7 @@ def isHttps(ip, port):
 def getTimestamp(human=False):
 	t = time.time()
 	if human:
-		timestamp = datetime.datetime.fromtimestamp(t).strftime("%d %b %Y %H:%M:%S")
+		timestamp = datetime.datetime.fromtimestamp(t).strftime("%d %b %Y %H:%M:%S").decode(locale.getlocale()[1])
 	else:
 		timestamp = datetime.datetime.fromtimestamp(t).strftime('%Y%m%d%H%M%S')
 	return timestamp
@@ -176,7 +177,8 @@ class MyQProcess(QProcess):
 	@pyqtSlot()															# this slot allows the process to append its output to the display widget
 	def readStdOutput(self):
 		output = QString(self.readAllStandardOutput())
-		self.display.appendPlainText(unicode(output, 'utf-8').strip())
+		#self.display.appendPlainText(unicode(output, 'utf-8').strip())
+		self.display.appendPlainText(unicode(output).strip())
 
 		if self.name == 'hydra':										# check if any usernames/passwords were found (if so emit a signal so that the gui can tell the user about it)
 			found, userlist, passlist = checkHydraResults(output)
@@ -186,7 +188,8 @@ class MyQProcess(QProcess):
 		stderror = QString(self.readAllStandardError())
 
 		if len(stderror) > 0:
-			self.display.appendPlainText(unicode(stderror, 'utf-8').strip())	# append standard error too
+			#self.display.appendPlainText(unicode(stderror, 'utf-8').strip())	# append standard error too
+			self.display.appendPlainText(unicode(stderror).strip())				# append standard error too
 
 # browser opener class with queue and semaphores
 class BrowserOpener(QtCore.QThread):

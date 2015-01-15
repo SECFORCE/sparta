@@ -22,7 +22,7 @@ class Controller():
 
 	# initialisations that will happen once - when the program is launched
 	def __init__(self, view, logic):
-		self.version = 'SPARTA 1.0 (BETA)'									# update this everytime you commit!
+		self.version = 'SPARTA 1.0.1 (BETA)'									# update this everytime you commit!
 		self.logic = logic
 		self.view = view
 		self.view.setController(self)
@@ -616,32 +616,21 @@ class Controller():
 			self.logic.passwordsWordlist.add(password)
 
 	# this function parses nmap's output looking for open ports to run automated attacks on
-	def scheduler(self, nmapoutput):
-		#print '[+] Calling scheduler..'
+	def scheduler(self, parser, isNmapImport):
+		if isNmapImport and self.settings.general_enable_scheduler_on_import == 'False':
+			return
 		if self.settings.general_enable_scheduler == 'True':
 			print '[+] Scheduler started!'
 			
-			hosts = re.split('Nmap scan report for',nmapoutput)			# split nmap scan by hosts
-			for host in hosts:
-				ip = re.search('[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+',host)
-				if ip:													# search for open ports
-
-					tcpopenports = re.findall('[0-9]+/tcp[\s]+open[\s]+.+\\n', str(host), re.I)
-					for tcpopenport in tcpopenports:
-						portservice = re.search('([0-9]+)/tcp[\s]+open[\s]+([^\s]+)', tcpopenport)
-						if portservice:
-							self.runToolsFor(str(portservice.group(2)), str(ip.group()), str(portservice.group(1)), 'tcp')
+			for h in parser.all_hosts():
+				for p in h.all_ports():
+					if p.state == 'open':
+						s = p.get_service()
+						if not (s is None):
+							self.runToolsFor(s.name, h.ip, p.portId, p.protocol)
 					
-					#udpopenports = re.findall('[0-9]+/udp[\s]+open[\s]+.+\\n', str(host), re.I)
-					udpopenports = re.findall('[0-9]+/udp[\s]+open\|*\w{0,8}[\s]+.+\\n', str(host), re.I)
-					for udpopenport in udpopenports:
-						#portservice = re.search('([0-9]+)/udp[\s]+open[\s]+([^\s]+)', udpopenport)
-						portservice = re.search('([0-9]+)/udp[\s]+open\|*\w{0,8}[\s]+([^\s]+)', udpopenport)
-						if portservice:
-							self.runToolsFor(str(portservice.group(2)), str(ip.group()), str(portservice.group(1)), 'udp')
-					
-					print '-----------------------------------------------'
-			print '[+] Scheduler ended!'
+			print '-----------------------------------------------'
+		print '[+] Scheduler ended!'
 
 	def runToolsFor(self, service, ip, port, protocol='tcp'):
 		print '\t[+] Running tools for: ' + service + ' on ' + ip + ':' + port
@@ -652,17 +641,24 @@ class Controller():
 		for tool in self.settings.automatedAttacks:
 			if service in tool[1].split(",") and protocol==tool[2]:
 				#print '\tFound tool: ' + tool[0]
-				for a in self.settings.portActions:			
-					if tool[0] == a[1]:
-						restoring = False
-						tabtitle = a[1]+" ("+port+"/"+protocol+")"
-						outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
-						command = str(a[2])
-						command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
+				if tool[0] == "screenshooter":
+					url = ip+':'+port
+					self.screenshooter.addToQueue(url)
+					self.screenshooter.start()
 
-						if 'nmap' in tabtitle:							# we don't want to show nmap tabs
-							restoring = True
+				else:
+					for a in self.settings.portActions:														
+						if tool[0] == a[1]:
+							restoring = False
+							tabtitle = a[1]+" ("+port+"/"+protocol+")"
+							outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
+							command = str(a[2])
+							command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
 
-						tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
-						self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
-						break
+							if 'nmap' in tabtitle:							# we don't want to show nmap tabs
+								restoring = True
+
+							tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
+							self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
+							break
+

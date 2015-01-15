@@ -43,6 +43,7 @@ class AppSettings():
 		self.actions.setValue('screenshooter-timeout','15000')
 		self.actions.setValue('web-services','http,https,ssl,soap,http-proxy,http-alt,https-alt')
 		self.actions.setValue('enable-scheduler','True')
+		self.actions.setValue('enable-scheduler-on-import','False')
 		self.actions.setValue('max-fast-processes', '10')
 		self.actions.setValue('max-slow-processes', '10')
 		self.actions.endGroup()
@@ -88,6 +89,7 @@ class AppSettings():
 		self.actions.setValue("nikto", ["Run nikto", "nikto -o [OUTPUT].txt -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
 		self.actions.setValue("dirbuster", ["Launch dirbuster", "java -Xmx256M -jar /usr/share/dirbuster/DirBuster-1.0-RC1.jar -u http://[IP]:[PORT]/", "http,https,ssl,soap,http-proxy,http-alt"])
 		self.actions.setValue("webslayer", ["Launch webslayer", "webslayer", "http,https,ssl,soap,http-proxy,http-alt"])
+		self.actions.setValue("whatweb", ["Run whatweb", "whatweb [IP]:[PORT] --color=never --log-brief=[OUTPUT].txt", "http,https,ssl,soap,http-proxy,http-alt"])		
 		
 		### SMB
 		self.actions.setValue("samrdump", ["Run samrdump", "python /usr/share/doc/python-impacket-doc/examples/samrdump.py [IP] [PORT]/SMB", "netbios-ssn,microsoft-ds"])
@@ -108,9 +110,12 @@ class AppSettings():
 		self.actions.setValue("ldapsearch", ["Run ldapsearch", "ldapsearch -h [IP] -p [PORT] -x -s base", "ldap"])		
 		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmpcheck -t [IP]", "snmp,snmptrap"])
 		self.actions.setValue("rpcinfo", ["Run rpcinfo", "rpcinfo -p [IP]", "rpcbind"])
+		self.actions.setValue("rdp-sec-check", ["Run rdp-sec-check.pl", "perl ./scripts/rdp-sec-check.pl [IP]:[PORT]", "ms-wbt-server"])
 		self.actions.setValue("showmount", ["Show nfs shares", "showmount -e [IP]", "nfs"])
 		self.actions.setValue("x11screen", ["Run x11screenshot", "bash ./scripts/x11screenshot.sh [IP]", "X11"])
-		self.actions.setValue("sslscan", ["Run sslscan", "sslscan --no-failed [IP]:[PORT]", "http,https,ssl,soap,http-proxy,http-alt"])
+		self.actions.setValue("sslscan", ["Run sslscan", "sslscan --no-failed [IP]:[PORT]", "https,ssl"])
+		self.actions.setValue("sslyze", ["Run sslyze", "sslyze --regular [IP]:[PORT]", "https,ssl,ms-wbt-server,imap,pop3,smtp"])
+
 		self.actions.setValue("rwho", ["Run rwho", "rwho -a [IP]", "who"])
 		self.actions.setValue("finger", ["Enumerate users (finger)", "./scripts/fingertool.sh [IP]", "finger"])
 
@@ -151,6 +156,7 @@ class AppSettings():
 
 		self.actions.beginGroup('SchedulerSettings')
 		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt","tcp"])
+		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt","tcp"])
 		self.actions.setValue("smbenum",["microsoft-ds","tcp"])
 #		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
 #		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
@@ -276,6 +282,7 @@ class AppSettings():
 		self.actions.setValue('screenshooter-timeout',newSettings.general_screenshooter_timeout)
 		self.actions.setValue('web-services',newSettings.general_web_services)
 		self.actions.setValue('enable-scheduler',newSettings.general_enable_scheduler)
+		self.actions.setValue('enable-scheduler-on-import',newSettings.general_enable_scheduler_on_import)
 		self.actions.setValue('max-fast-processes', newSettings.general_max_fast_processes)
 		self.actions.setValue('max-slow-processes', newSettings.general_max_slow_processes)
 		self.actions.endGroup()
@@ -380,6 +387,7 @@ class Settings():
 				self.general_screenshooter_timeout = self.generalSettings['screenshooter-timeout']
 				self.general_web_services = self.generalSettings['web-services']
 				self.general_enable_scheduler = self.generalSettings['enable-scheduler']
+				self.general_enable_scheduler_on_import = self.generalSettings['enable-scheduler-on-import']
 				self.general_max_fast_processes = self.generalSettings['max-fast-processes']
 				self.general_max_slow_processes = self.generalSettings['max-slow-processes']
 

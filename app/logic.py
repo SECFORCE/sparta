@@ -398,16 +398,16 @@ class Logic():
 	# this function adds a new process to the DB
 	def addProcessToDB(self, proc):
 		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), str(proc.starttime), str(proc.outputfile), 'Waiting', p_output)
+		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), proc.starttime, str(proc.outputfile), 'Waiting', p_output)
 		self.db.commit()
 		proc.id = p.id
 		return p.id
 	
 	def addScreenshotToDB(self, ip, port, filename):
 		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", str(getTimestamp(True)), str(filename), "Finished", p_output)
+		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", getTimestamp(True), str(filename), "Finished", p_output)
 		self.db.commit()
-		return p.id		
+		return p.id
 		
 	# is not actually a toggle function. it sets all the non-running processes display flag to false to ensure they aren't shown in the process table 
 	# but they need to be shown as tool tabs. this function is called when a user clears the processes or when a project is being closed.
@@ -507,7 +507,7 @@ class Logic():
 class NmapImporter(QtCore.QThread):
 	tick = QtCore.pyqtSignal(int, name="changed")						# New style signal
 	done = QtCore.pyqtSignal(name="done")								# New style signal
-	schedule = QtCore.pyqtSignal(str, name="schedule")					# New style signal
+	schedule = QtCore.pyqtSignal(object, bool, name="schedule")			# New style signal
 
 	def __init__(self):
 		QtCore.QThread.__init__(self, parent=None)
@@ -682,8 +682,7 @@ class NmapImporter(QtCore.QThread):
 			self.db.dbsemaphore.release()								# we are done with the DB
 			print '\t[+] Finished in '+ str(time.time()-starttime) + ' seconds.'
 			self.done.emit()
-			if not self.output == '':
-				self.schedule.emit(self.output)							# call the scheduler
+			self.schedule.emit(parser, self.output == '')				# call the scheduler (if there is no terminal output it means we imported nmap)
 			
 		except:
 			print '\t[-] Something went wrong when parsing the nmap file..'
