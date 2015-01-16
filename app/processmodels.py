@@ -90,8 +90,12 @@ class ProcessesTableModel(QtCore.QAbstractTableModel):
 	def sort(self, Ncol, order):
 		self.emit(SIGNAL("layoutAboutToBeChanged()"))
 		array=[]
+
+		if Ncol == 3:            
+			for i in range(len(self.__processes)):
+				array.append(self.__processes[i]['name'])
 		
-		if Ncol == 4:            
+		elif Ncol == 4:            
 			for i in range(len(self.__processes)):
 				array.append(self.__processes[i]['tabtitle'])
 				
