@@ -513,7 +513,7 @@ class Controller():
 		qProcess.finished.connect(lambda: self.processFinished(qProcess))
 		qProcess.error.connect(lambda: self.processCrashed(qProcess))
 
-		if stage > 0 and stage < 5:										# if this is a staged nmap, launch the next stage
+		if stage > 0 and stage < (len(self.settings.stagedNmapSettings)-1):	# if this is a staged nmap, launch the next stage
 			qProcess.finished.connect(lambda: self.runStagedNmap(str(hostip), discovery, stage+1, self.logic.isKilledProcess(str(qProcess.id))))
 
 		return qProcess.pid()											# return the pid so that we can kill the process if needed
@@ -523,32 +523,31 @@ class Controller():
 		if not stop:
 			textbox = self.view.createNewTabForHost(str(iprange), 'nmap (stage '+str(stage)+')', True)
 			outputfile = self.logic.runningfolder+"/nmap/"+getTimestamp()+'-nmapstage'+str(stage)		
-			
-			if stage == 1:												# webservers/proxies
-				ports = self.settings.tools_nmap_stage1_ports
-			elif stage == 2:											# juicy stuff that we could enumerate + db
-				ports = self.settings.tools_nmap_stage2_ports
-			elif stage == 3:											# bruteforceable protocols + portmapper + nfs
-				ports = self.settings.tools_nmap_stage3_ports
-			elif stage == 4:											# first 30000 ports except ones above
-				ports = self.settings.tools_nmap_stage4_ports
-			else:														# last 35535 ports
-				ports = self.settings.tools_nmap_stage5_ports
 
 			command = "nmap "
 			if not discovery:											# is it with/without host discovery?
 				command += "-Pn "
-			command += "-T4 -sV "										# without scripts (faster)
-			if not stage == 1:
-				command += "-n "										# only do DNS resolution on first stage
-			if os.geteuid() == 0:										# if we are root we can run SYN + UDP scans
-				command += "-sSU "
-				if stage == 2:
-					command += "-O "									# only check for OS once to save time and only if we are root otherwise it fails
+
+			if "stage"+str(stage) in self.settings.stagedNmapSettings.keys():
+				if "flags" in self.settings.stagedNmapSettings["stage"+str(stage)].keys():
+					command += self.settings.stagedNmapSettings['stage'+str(stage)]['flags'] + ' '
+				else:
+
+					command += self.settings.stagedNmapSettings['stage0']['flags'] + ' '
+				if "ports" in self.settings.stagedNmapSettings["stage"+str(stage)].keys():
+					if self.settings.stagedNmapSettings['stage'+str(stage)]['ports'] == "-": # Check for all ports
+						command += "-p"+self.settings.stagedNmapSettings['stage'+str(stage)]['ports']
+					else:
+						command += "-p "+self.settings.stagedNmapSettings['stage'+str(stage)]['ports']
+				else:
+					command += "-p "+self.settings.stagedNmapSettings['stage0']['ports']
 			else:
-				command += "-sT "
-			command += "-p "+ports+' '+iprange+" -oA "+outputfile
-							
+				command += self.settings.stagedNmapSettings['stage'+str(stage)]['flags'] + ' ' + "-p " + \
+                           self.settings.stagedNmapSettings['stage0']['ports']
+			command += ' '+iprange+" -oA "+outputfile
+			if os.geteuid() != 0 and "-sSU" in command: # if we are root we can run SYN + UDP scans
+				command.replace("-sSU ", "")
+			print command
 			self.runCommand('nmap','nmap (stage '+str(stage)+')', str(iprange), '', '', command, getTimestamp(True), outputfile, textbox, discovery, stage, stop)
 
 	def nmapImportFinished(self):
@@ -654,15 +653,22 @@ class Controller():
 				#print '\tFound tool: ' + tool[0]
 				for a in self.settings.portActions:			
 					if tool[0] == a[1]:
-						restoring = False
-						tabtitle = a[1]+" ("+port+"/"+protocol+")"
-						outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
-						command = str(a[2])
-						command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
+						if tool[0] == "screenshooter":
+							url = ip+':'+port
+							self.screenshooter.addToQueue(url)
+						else:
+							restoring = False
+							tabtitle = a[1]+" ("+port+"/"+protocol+")"
+							outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
+							command = str(a[2])
+							command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
 
-						if 'nmap' in tabtitle:							# we don't want to show nmap tabs
-							restoring = True
+							if 'nmap' in tabtitle:							# we don't want to show nmap tabs
+								restoring = True
 
-						tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
-						self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
+							tab = self.view.ui.HostsTabWidget.tabText(self.view.ui.HostsTabWidget.currentIndex())						
+							self.runCommand(tool[0], tabtitle, ip, port, protocol, command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, not (tab == 'Hosts')))
+						
 						break
+						
+			self.screenshooter.start()
