@@ -13,6 +13,8 @@ Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
 # check for dependencies first (make sure all non-standard dependencies are checked for here)
 try:
+	import sqlalchemy.orm
+	sqlalchemy.orm.ScopedSession = sqlalchemy.orm.scoped_session
 	import elixir
 except:
 	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt-get install python-elixir"
