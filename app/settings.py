@@ -60,11 +60,17 @@ class AppSettings():
 		self.actions.endGroup()
 
 		self.actions.beginGroup('StagedNmapSettings')
+		self.actions.setValue('stage0-ports','T:80,443')
+		self.actions.setValue('stage0-flags','-T4 -sV -sSU')
 		self.actions.setValue('stage1-ports','T:80,443')
+		self.actions.setValue('stage1-flags','-T4 -sV -sSU')
 		self.actions.setValue('stage2-ports','T:25,135,137,139,445,1433,3306,5432,U:137,161,162,1434')
+		self.actions.setValue('stage2-flags','-T4 -sV -sSU -O')
 		self.actions.setValue('stage3-ports','T:23,21,22,110,111,2049,3389,8080,U:500,5060')
+		self.actions.setValue('stage4-flags','-T4 -sV -sSU')
 		self.actions.setValue('stage4-ports','T:0-20,24,26-79,81-109,112-134,136,138,140-442,444,446-1432,1434-2048,2050-3305,3307-3388,3390-5431,5433-8079,8081-29999')
 		self.actions.setValue('stage5-ports','T:30000-65535')
+		self.actions.setValue('stage5-flags','-T4 -sV -sSU')
 		self.actions.endGroup()
 
 		self.actions.beginGroup('ToolSettings')
@@ -200,7 +206,9 @@ class AppSettings():
 		self.actions.beginGroup('StagedNmapSettings')
 		keys = self.actions.childKeys()
 		for k in keys:
-			settings.update({str(k):str(self.actions.value(k).toString())})
+			if str(k).split('-')[0] not in settings.keys():
+				settings[str(k).split('-')[0]] = dict()
+			settings[str(k).split('-')[0]].update({str(k).split('-')[1]: str(self.actions.value(k).toString())})
 		self.actions.endGroup()
 		return settings
 
@@ -299,11 +307,9 @@ class AppSettings():
 		self.actions.endGroup()
 
 		self.actions.beginGroup('StagedNmapSettings')
-		self.actions.setValue('stage1-ports',newSettings.tools_nmap_stage1_ports)
-		self.actions.setValue('stage2-ports',newSettings.tools_nmap_stage2_ports)
-		self.actions.setValue('stage3-ports',newSettings.tools_nmap_stage3_ports)
-		self.actions.setValue('stage4-ports',newSettings.tools_nmap_stage4_ports)
-		self.actions.setValue('stage5-ports',newSettings.tools_nmap_stage5_ports)
+		self.actions.setvalue('stagedNmapSettings', newSettings.stagedNmapSettings)
+		for stage in self.tools_nmap_stage:
+			self.actions.setValue(str(stage),newSettings.tools_nmap_stage[stage])
 		self.actions.endGroup()
 
 		self.actions.beginGroup('HostActions')
@@ -352,11 +358,23 @@ class Settings():
 		self.brute_no_password_services = "oracle-sid,rsh,smtp-enum"
 
 		# tools
-		self.tools_nmap_stage1_ports = "T:80,443"
-		self.tools_nmap_stage2_ports = "T:25,135,137,139,445,1433,3306,5432,U:137,161,162,1434"
-		self.tools_nmap_stage3_ports = "T:23,21,22,110,111,2049,3389,8080,U:500,5060"
-		self.tools_nmap_stage4_ports = "T:0-20,24,26-79,81-109,112-134,136,138,140-442,444,446-1432,1434-2048,2050-3305,3307-3388,3390-5431,5433-8079,8081-29999"
-		self.tools_nmap_stage5_ports = "T:30000-65535"
+		self.tools_nmap_stage = {}
+		# Stage 0, the defaults
+		self.tools_nmap_stage['stage0'] = {'ports': "T:80,443", 'flags': "-T4 -sV -sSU"}
+		# Stage 1
+		self.tools_nmap_stage['stage1'] = {'ports': "T:80,443", 'flags': "-T4 -sV -sSU"}
+		# Stage 2
+		self.tools_nmap_stage['stage2'] = {'ports': "T:25,135,137,139,445,1433,3306,5432,U:137,161,162,1434", 'flags':
+                                            "-T4 -sV -n -sSU -O"}
+		# Stage 3
+		self.tools_nmap_stage['stage3'] = {'ports': "T:23,21,22,110,111,2049,3389,8080,U:500,5060", 'flags':
+                                            "-T4 -sV -n -sSU"}
+		# Stage 4
+		self.tools_nmap_stage['stage4'] = {'ports': "T:0-20,24,26-79,81-109,112-134,136,138,140-442,444,446-1432,"
+                                                    "1434-2048,2050-3305,3307-3388,3390-5431,5433-8079,8081-29999",
+                                                    'flags': "-T4 -sV -n -sSU"}
+		# Stage 5
+		self.tools_nmap_stage['stage5'] = {'ports': "T:30000-65535", 'flags': "-T4 -sV -n -sSU"}
 
 		self.tools_path_nmap = "/usr/bin/nmap"
 		self.tools_path_hydra = "/usr/bin/hydra"
@@ -366,7 +384,7 @@ class Settings():
 		self.hostActions = []
 		self.portActions = []
 		self.portTerminalActions = []
-		self.stagedNmapSettings = []
+		self.stagedNmapSettings = self.tools_nmap_stage # Should remove all refs to 'stagedNmapSettings' and just use 'tools_nmap_stage'
 		self.automatedAttacks = []
 		
 		# now that all defaults are set, overwrite with whatever was in the .conf file (stored in appSettings)
@@ -402,12 +420,6 @@ class Settings():
 				self.brute_no_password_services = self.bruteSettings['no-password-services']
 
 				# tools
-				self.tools_nmap_stage1_ports = self.stagedNmapSettings['stage1-ports']
-				self.tools_nmap_stage2_ports = self.stagedNmapSettings['stage2-ports']
-				self.tools_nmap_stage3_ports = self.stagedNmapSettings['stage3-ports']
-				self.tools_nmap_stage4_ports = self.stagedNmapSettings['stage4-ports']
-				self.tools_nmap_stage5_ports = self.stagedNmapSettings['stage5-ports']
-
 				self.tools_path_nmap = self.toolSettings['nmap-path']
 				self.tools_path_hydra = self.toolSettings['hydra-path']
 				self.tools_path_cutycapt = self.toolSettings['cutycapt-path']
