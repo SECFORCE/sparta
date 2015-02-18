@@ -75,12 +75,18 @@ if __name__ == "__main__":
 	ui = Ui_MainWindow()
 	ui.setupUi(MainWindow)
 	
-	qss_file = open('./ui/sparta.qss').read()		# TODO: error handling?
-	MainWindow.setStyleSheet(qss_file)
+	try:
+		qss_file = open('./ui/sparta.qss').read()
 
-	logic = Logic()									# Model prep (logic, db and models)
-	view = View(ui, MainWindow)						# View prep (gui)
-	controller = Controller(view, logic)			# Controller prep (communication between model and view)
+		MainWindow.setStyleSheet(qss_file)
 
-	MainWindow.show()
-	sys.exit(app.exec_())
+       		logic = Logic()                                                                 # Model prep (logic, db and models)
+        	view = View(ui, MainWindow)                                             # View prep (gui)
+        	controller = Controller(view, logic)                    # Controller prep (communication between model and view)
+
+        	MainWindow.show()
+        	sys.exit(app.exec_())
+
+	except IOError, e:
+		print e, ": ./ui/sparta.qss is missing."
+		sys.exit(-1)
