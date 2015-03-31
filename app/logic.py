@@ -284,23 +284,6 @@ class Logic():
 		return metadata.bind.execute(tmp_query, str(hostIP), str(port)).first()
 	
 	# used to delete all port/script data related to a host - to overwrite portscan info with the latest scan	
-	def deleteAllPortsAndScriptsForHostFromDB_old(self, hostID, protocol):
-		ports_for_host = nmap_port.query.filter(nmap_port.host_id == hostID, nmap_port.protocol == str(protocol)).all()
-				
-		ports=[]
-		for p in ports_for_host:
-			ports.append(p.id)
-
-		scripts_for_ports = nmap_script.query.filter(nmap_script.port_id.in_(ports)).all()
-
-		for s in scripts_for_ports:
-			s.delete()				
-		for p in ports_for_host:
-			p.delete()
-					
-		self.db.commit()
-
-	# used to delete all port/script data related to a host - to overwrite portscan info with the latest scan	
 	def deleteAllPortsAndScriptsForHostFromDB(self, hostID, protocol):
 		ports_for_host = nmap_port.query.filter(nmap_port.host_id == hostID, nmap_port.protocol == str(protocol)).all()
 				
@@ -403,14 +386,14 @@ class Logic():
 	# this function adds a new process to the DB
 	def addProcessToDB(self, proc):
 		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), proc.starttime, str(proc.outputfile), 'Waiting', p_output)
+		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), proc.starttime, "", str(proc.outputfile), 'Waiting', p_output)
 		self.db.commit()
 		proc.id = p.id
 		return p.id
 	
 	def addScreenshotToDB(self, ip, port, filename):
 		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", getTimestamp(True), str(filename), "Finished", p_output)
+		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", getTimestamp(True), getTimestamp(True), str(filename), "Finished", p_output)
 		self.db.commit()
 		return p.id
 		
@@ -433,12 +416,14 @@ class Logic():
 		proc = process.query.filter_by(id=procId).first()
 		if proc and not proc.status == 'Finished':
 			proc.status = 'Killed'
+			proc.endtime = getTimestamp(True)	# store end time
 			self.db.commit()
 
 	def storeProcessCrashStatusInDB(self, procId):
 		proc = process.query.filter_by(id=procId).first()
 		if proc and not proc.status == 'Killed' and not proc.status == 'Cancelled':
 			proc.status = 'Crashed'
+			proc.endtime = getTimestamp(True)	# store end time
 			self.db.commit()
 			
 	# this function updates the status of a process if it is killed
@@ -446,6 +431,7 @@ class Logic():
 		proc = process.query.filter_by(id=procId).first()
 		if proc:
 			proc.status = 'Cancelled'
+			proc.endtime = getTimestamp(True)	# store end time
 			self.db.commit()
 
 	def storeProcessRunningStatusInDB(self, procId, pid):
@@ -478,19 +464,6 @@ class Logic():
 			else:
 				proc.status = 'Finished'
 				self.db.commit()
-				
-	# this function stores a finished process' output to the DB and updates it status
-	def storeProcessOutputInDB_old(self, procId, output):
-		proc = process.query.filter_by(id=procId).first()
-
-		if proc:
-			proc.output = unicode(output)
-			
-			if proc.status == "Killed" or proc.status == "Cancelled":	# if the process has been killed don't change the status to "Finished"
-				return True							
-			else:
-				proc.status = 'Finished'
-				self.db.commit()				
 
 	def storeNotesInDB(self, hostId, notes):
 		note = self.getNoteFromDB(hostId)

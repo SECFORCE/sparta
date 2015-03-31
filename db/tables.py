@@ -153,7 +153,7 @@ class process(Entity):
 	status=Field(String)
 	closed=Field(String)
 	
-	def __init__(self, pid, name, tabtitle, hostip, port, protocol, command, starttime, outputfile, status, processOutputId):
+	def __init__(self, pid, name, tabtitle, hostip, port, protocol, command, starttime, endtime, outputfile, status, processOutputId):
 		self.display='True'
 		self.pid=pid
 		self.name=name
@@ -163,7 +163,7 @@ class process(Entity):
 		self.protocol=protocol		
 		self.command=command
 		self.starttime=starttime
-		self.endtime=''
+		self.endtime=endtime
 		self.outputfile=outputfile
 		self.output=processOutputId
 		self.status=status
