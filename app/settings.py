@@ -75,21 +75,21 @@ class AppSettings():
 		self.actions.endGroup()
 
 		self.actions.beginGroup('HostActions')
-		self.actions.setValue("nmap-fast-tcp", ["Run nmap (fast TCP)", "nmap -Pn -F -T4 -vvvv [IP] -oA [OUTPUT]"])
-		self.actions.setValue("nmap-full-tcp", ["Run nmap (full TCP)", "nmap -Pn -sV -sC -O -p- -T4 -vvvvv [IP] -oA [OUTPUT]"])
-		self.actions.setValue("nmap-fast-udp", ["Run nmap (fast UDP)", "nmap -n -Pn -sU -F --min-rate=1000 -vvvvv [IP] -oA [OUTPUT]"])
-		self.actions.setValue("nmap-udp-1000", ["Run nmap (top 1000 quick UDP)", "nmap -n -Pn -sU --min-rate=1000 -vvvvv [IP] -oA [OUTPUT]"])
-		self.actions.setValue("nmap-full-udp", ["Run nmap (full UDP)", "nmap -n -Pn -sU -p- -T4 -vvvvv [IP] -oA [OUTPUT]"])
+		self.actions.setValue("nmap-fast-tcp", ["Run nmap (fast TCP)", "nmap -Pn -F -T4 -vvvv [IP] -oA \"[OUTPUT]\""])
+		self.actions.setValue("nmap-full-tcp", ["Run nmap (full TCP)", "nmap -Pn -sV -sC -O -p- -T4 -vvvvv [IP] -oA \"[OUTPUT]\""])
+		self.actions.setValue("nmap-fast-udp", ["Run nmap (fast UDP)", "nmap -n -Pn -sU -F --min-rate=1000 -vvvvv [IP] -oA \"[OUTPUT]\""])
+		self.actions.setValue("nmap-udp-1000", ["Run nmap (top 1000 quick UDP)", "nmap -n -Pn -sU --min-rate=1000 -vvvvv [IP] -oA \"[OUTPUT]\""])
+		self.actions.setValue("nmap-full-udp", ["Run nmap (full UDP)", "nmap -n -Pn -sU -p- -T4 -vvvvv [IP] -oA \"[OUTPUT]\""])
 		self.actions.setValue("unicornscan-full-udp", ["Run unicornscan (full UDP)", "unicornscan -mU -Ir 1000 [IP]:a -v"])
 		self.actions.endGroup()
 
 		self.actions.beginGroup('PortActions')
 		self.actions.setValue("banner", ["Grab banner", "bash -c \"echo \"\" | nc -v -n -w1 [IP] [PORT]\"", ""])
 		self.actions.setValue("nmap", ["Run nmap (scripts) on port", "nmap -Pn -sV -sC -vvvvv -p[PORT] [IP] -oA [OUTPUT]", ""])
-		self.actions.setValue("nikto", ["Run nikto", "nikto -o [OUTPUT].txt -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
+		self.actions.setValue("nikto", ["Run nikto", "nikto -o \"[OUTPUT].txt\" -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
 		self.actions.setValue("dirbuster", ["Launch dirbuster", "java -Xmx256M -jar /usr/share/dirbuster/DirBuster-1.0-RC1.jar -u http://[IP]:[PORT]/", "http,https,ssl,soap,http-proxy,http-alt"])
 		self.actions.setValue("webslayer", ["Launch webslayer", "webslayer", "http,https,ssl,soap,http-proxy,http-alt"])
-		self.actions.setValue("whatweb", ["Run whatweb", "whatweb [IP]:[PORT] --color=never --log-brief=[OUTPUT].txt", "http,https,ssl,soap,http-proxy,http-alt"])		
+		self.actions.setValue("whatweb", ["Run whatweb", "whatweb [IP]:[PORT] --color=never --log-brief=\"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])		
 		
 		### SMB
 		self.actions.setValue("samrdump", ["Run samrdump", "python /usr/share/doc/python-impacket-doc/examples/samrdump.py [IP] [PORT]/SMB", "netbios-ssn,microsoft-ds"])

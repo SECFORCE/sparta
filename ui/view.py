@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -164,7 +164,7 @@ class View(QtCore.QObject):
 
 		# tools table (left)
  		headers = ["Progress","Display","Pid","Tool","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status"]
-		setTableProperties(self.ui.ToolsTableView, len(headers), [0,1,2,4,5,6,7,8,9,10,11,12])
+		setTableProperties(self.ui.ToolsTableView, len(headers), [0,1,2,4,5,6,7,8,9,10,11,12,13])
 
 		# service table (right)
 		headers = ["Host","Port","Port","Protocol","State","HostId","ServiceId","Name","Product","Version","Extrainfo","Fingerprint"]
@@ -188,7 +188,8 @@ class View(QtCore.QObject):
 	
 		# process table
 		headers = ["Progress","Display","Pid","Name","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status"]
-		setTableProperties(self.ui.ProcessesTableView, len(headers), [1,2,3,6,7,8,10,11])
+		#setTableProperties(self.ui.ProcessesTableView, len(headers), [1,2,3,6,7,8,10,11])
+		setTableProperties(self.ui.ProcessesTableView, len(headers), [1,2,3,6,7,8,11,12,14])
 		self.ui.ProcessesTableView.horizontalHeader().resizeSection(0,125)
 		#self.ui.ProcessesTableView.horizontalHeader().resizeSection(4,125)
 		self.ui.ProcessesTableView.horizontalHeader().resizeSection(4,250)
@@ -399,6 +400,7 @@ class View(QtCore.QObject):
 			self.importProgressWidget.reset('Importing nmap..')	
 			self.controller.nmapImporter.setFilename(str(filename))
 			self.controller.nmapImporter.start()
+			self.controller.copyNmapXMLToOutputFolder(str(filename))
 			self.importProgressWidget.show()
 			
 		else:
@@ -885,13 +887,13 @@ class View(QtCore.QObject):
 		
 	def updateToolsTableView(self):
 		if self.ui.MainTabWidget.tabText(self.ui.MainTabWidget.currentIndex()) == 'Scan' and self.ui.HostsTabWidget.tabText(self.ui.HostsTabWidget.currentIndex()) == 'Tools':
-			headers = ["Progress","Display","Pid","Tool","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status","Closed"]
+			headers = ["Progress","Display","Pid","Tool","Tool","Host","Port","Protocol","Command","Start time","End time","OutputFile","Output","Status","Closed"]
 			self.ToolsTableModel = ProcessesTableModel(self,self.controller.getProcessesFromDB(self.filters), headers)
 			self.ui.ToolsTableView.setModel(self.ToolsTableModel)
 
 			self.lazy_update_tools = False								# to indicate that it doesn't need to be updated anymore
 
-			for i in [0,1,2,4,5,6,7,8,9,10,11,12,13]:					# hide some columns
+			for i in [0,1,2,4,5,6,7,8,9,10,11,12,13,14]:				# hide some columns
 				self.ui.ToolsTableView.setColumnHidden(i, True)
 					
 			tools = []													# ensure that there is always something selected
@@ -1084,17 +1086,18 @@ class View(QtCore.QObject):
 	#################### BOTTOM PANEL INTERFACE UPDATE FUNCTIONS ####################		
 		
 	def updateProcessesTableView(self):
-		headers = ["Progress","Display","Pid","Name","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status","Closed"]
+		headers = ["Progress","Display","Pid","Name","Tool","Host","Port","Protocol","Command","Start time","End time","OutputFile","Output","Status","Closed"]
 		self.ProcessesTableModel = ProcessesTableModel(self,self.controller.getProcessesFromDB(self.filters, True), headers)
 		self.ui.ProcessesTableView.setModel(self.ProcessesTableModel)
 		
-		for i in [1,2,3,6,7,8,10,11,13]:								# hide some columns
+		for i in [1,2,3,6,7,8,11,12,14]:								# hide some columns
 			self.ui.ProcessesTableView.setColumnHidden(i, True)
 			
 		self.ui.ProcessesTableView.horizontalHeader().resizeSection(0,125)
-		self.ui.ProcessesTableView.horizontalHeader().resizeSection(4,250)
+		self.ui.ProcessesTableView.horizontalHeader().resizeSection(4,210)
 		self.ui.ProcessesTableView.horizontalHeader().resizeSection(5,135)
 		self.ui.ProcessesTableView.horizontalHeader().resizeSection(9,165)
+		self.ui.ProcessesTableView.horizontalHeader().resizeSection(10,165)
 		self.updateProcessesIcon()
 
 	def updateProcessesIcon(self):

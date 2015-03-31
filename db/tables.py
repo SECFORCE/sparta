@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -146,7 +146,8 @@ class process(Entity):
 	port=Field(String)
 	protocol=Field(String)	
 	command=Field(String)
-	starttime=Field(String)	
+	starttime=Field(String)
+	endtime=Field(String)
 	outputfile=Field(String)
 	output=OneToOne('process_output', inverse='process')
 	status=Field(String)
@@ -161,13 +162,13 @@ class process(Entity):
 		self.port=port
 		self.protocol=protocol		
 		self.command=command
-		self.starttime=starttime		
+		self.starttime=starttime
+		self.endtime=''
 		self.outputfile=outputfile
 		self.output=processOutputId
 		self.status=status
 		self.closed='False'
 
-### new: now storing process output in a different table to speed up things
 class process_output(Entity):
 	output=Field(Unicode)
 	process=ManyToOne('process')

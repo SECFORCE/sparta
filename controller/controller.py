@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -22,7 +22,7 @@ class Controller():
 
 	# initialisations that will happen once - when the program is launched
 	def __init__(self, view, logic):
-		self.version = 'SPARTA 1.0.1 (BETA)'									# update this everytime you commit!
+		self.version = 'SPARTA 1.0.2 (BETA)'							# update this everytime you commit!
 		self.logic = logic
 		self.view = view
 		self.view.setController(self)
@@ -118,6 +118,9 @@ class Controller():
 		
 	def updateOutputFolder(self):
 		self.screenshooter.updateOutputFolder(self.logic.outputfolder+'/screenshots')	# update screenshot folder
+
+	def copyNmapXMLToOutputFolder(self, filename):
+		self.logic.copyNmapXMLToOutputFolder(filename)
 
 	def isTempProject(self):
 		return self.logic.istemp
@@ -640,7 +643,6 @@ class Controller():
 
 		for tool in self.settings.automatedAttacks:
 			if service in tool[1].split(",") and protocol==tool[2]:
-				#print '\tFound tool: ' + tool[0]
 				if tool[0] == "screenshooter":
 					url = ip+':'+port
 					self.screenshooter.addToQueue(url)
@@ -651,7 +653,7 @@ class Controller():
 						if tool[0] == a[1]:
 							restoring = False
 							tabtitle = a[1]+" ("+port+"/"+protocol+")"
-							outputfile = self.logic.runningfolder+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
+							outputfile = self.logic.runningfolder+"/"+re.sub("[^0-9a-zA-Z]", "", str(tool[0]))+"/"+getTimestamp()+'-'+a[1]+"-"+ip+"-"+port
 							command = str(a[2])
 							command = command.replace('[IP]', ip).replace('[PORT]', port).replace('[OUTPUT]', outputfile)
 

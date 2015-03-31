@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -13,6 +13,7 @@ Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
 # check for dependencies first (make sure all non-standard dependencies are checked for here)
 try:
+	from sqlalchemy.orm import scoped_session as scoped_session
 	import elixir
 except:
 	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt-get install python-elixir"
@@ -21,7 +22,7 @@ try:
 	from PyQt4 import QtGui, QtCore, QtWebKit
 except:
 	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt-get install python-qt4"
-	exit(0)
+	exit()
 	
 from app.logic import *
 from ui.gui import *
@@ -74,8 +75,13 @@ if __name__ == "__main__":
 	MainWindow = QtGui.QMainWindow()
 	ui = Ui_MainWindow()
 	ui.setupUi(MainWindow)
-	
-	qss_file = open('./ui/sparta.qss').read()		# TODO: error handling?
+
+	try:	
+		qss_file = open('./ui/sparta.qss').read()
+	except IOError, e:
+		print "[-] The sparta.qss file is missing. Your installation seems to be corrupted. Try downloading the latest version."
+		exit(0)
+
 	MainWindow.setStyleSheet(qss_file)
 
 	logic = Logic()									# Model prep (logic, db and models)

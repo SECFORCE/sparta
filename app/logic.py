@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -75,9 +75,7 @@ class Logic():
 		self.storeWordlists = flag
 
 	# this function moves the specified tool output file from the temporary 'running' folder to the 'tool output' folder
-	# TODO: move tool output into right tool folder
 	def moveToolOutput(self, outputFilename):
-#
 		try:
 			# first create the tool folder if it doesn't already exist
 			tool = ntpath.basename(ntpath.dirname(str(outputFilename)))
@@ -90,6 +88,12 @@ class Logic():
 				shutil.move(str(outputFilename), str(path))
 			# move all the nmap files (not only the .xml)
 			elif os.path.exists(str(outputFilename)+'.xml') and os.path.exists(str(outputFilename)+'.nmap') and os.path.exists(str(outputFilename)+'.gnmap') and os.path.isfile(str(outputFilename)+'.xml') and os.path.isfile(str(outputFilename)+'.nmap') and os.path.isfile(str(outputFilename)+'.gnmap'):
+				try:
+					exportNmapToHTML(str(outputFilename))
+					shutil.move(str(outputFilename)+'.html', str(path))
+				except:
+					pass
+
 				shutil.move(str(outputFilename)+'.xml', str(path))
 				shutil.move(str(outputFilename)+'.nmap', str(path))
 				shutil.move(str(outputFilename)+'.gnmap', str(path))
@@ -100,6 +104,18 @@ class Logic():
 		except:
 			print '[-] Something went wrong moving the tool output file..'
 			print "[-] Unexpected error:", sys.exc_info()[0]
+
+	def copyNmapXMLToOutputFolder(self, file):
+		try:
+			path = self.outputfolder+"/nmap"
+			filename = ntpath.basename(str(file))
+			if not os.path.exists(str(path)):
+				os.makedirs(str(path))
+
+			shutil.copy(str(file), str(path))	# will overwrite if file already exists
+		except:
+			print '[-] Something went wrong copying the imported XML to the project folder.'
+			print "[-] Unexpected error:", sys.exc_info()[0]			
 
 	def openExistingProject(self, filename):
 		try:
@@ -333,23 +349,12 @@ class Logic():
 
 		return metadata.bind.execute(tmp_query, str(serviceName)).fetchall()
 
-
-	# this function returns all the processes from the DB
-	# the showProcesses flag is used to ensure we don't display processes in the process table after we have cleared them or when an existing project is opened.
-	def getProcessesFromDB_old(self, filters, showProcesses=''):
-		if showProcesses == '':
-			tmp_query = ('SELECT process.* FROM db_tables_process AS process group by name')
-			return metadata.bind.execute(tmp_query).fetchall()
-		else:
-			tmp_query = ('SELECT * FROM db_tables_process AS process WHERE process.display=? order by id desc')
-			return metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
-
 	# this function returns all the processes from the DB
 	# the showProcesses flag is used to ensure we don't display processes in the process table after we have cleared them or when an existing project is opened.
 	# to speed up the queries we replace the columns we don't need by zeros (the reason we need all the columns is we are using the same model to display process information everywhere)
 	def getProcessesFromDB(self, filters, showProcesses=''):
 		if showProcesses == '':											# we do not fetch nmap processes because these are not displayed in the host tool tabs / tools
-			tmp_query = ('SELECT "0", "0", "0", process.name, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" FROM db_tables_process AS process WHERE process.closed="False" AND process.name!="nmap" group by process.name')
+			tmp_query = ('SELECT "0", "0", "0", process.name, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" FROM db_tables_process AS process WHERE process.closed="False" AND process.name!="nmap" group by process.name')
 			result = metadata.bind.execute(tmp_query).fetchall()
 
 		elif showProcesses == False:									# when opening a project, fetch only the processes that have display=false and were not in tabs that were closed by the user
@@ -361,7 +366,7 @@ class Logic():
 		else:															# show all the processes in the (bottom) process table (no matter their closed value)
 			tmp_query = ('SELECT * FROM db_tables_process AS process WHERE process.display=? order by id desc')
 			result = metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
-			
+
 		return result
 
 	def getHostsForTool(self, toolname, closed='False'):
@@ -464,6 +469,8 @@ class Logic():
 			proc_output = process_output.query.filter_by(process_id=procId).first()
 			if proc_output:
 				proc_output.output=unicode(output)
+
+			proc.endtime = getTimestamp(True)	# store end time
 
 			if proc.status == "Killed" or proc.status == "Cancelled" or proc.status == "Crashed":	# if the process has been killed don't change the status to "Finished"
 				self.db.commit() 										# new: this was missing but maybe this is important here to ensure that we save the process output no matter what

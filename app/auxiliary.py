@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -136,6 +136,15 @@ def checkHydraResults(output):
 				passwords.append(password.group(2))	
 		return True, usernames, passwords								# returns the lists of found usernames and passwords
 	return False, [], []
+
+def exportNmapToHTML(filename):
+	try:
+		command = 'xsltproc -o ' + str(filename)+'.html ' + str(filename)+ '.xml'
+		p = subprocess.Popen(command, shell=True)
+		p.wait()
+	
+	except:
+		print '[-] Could not convert nmap XML to HTML. Try: apt-get install xsltproc'
 
 # this class is used for example to store found usernames/passwords	
 class Wordlist():

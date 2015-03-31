@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -78,14 +78,16 @@ class ProcessesTableModel(QtCore.QAbstractTableModel):
 			elif column == 9:
 				value = self.__processes[row]['starttime']
 			elif column == 10:
-				value = self.__processes[row]['outputfile']				
+				value = self.__processes[row]['endtime']
 			elif column == 11:
+				value = self.__processes[row]['outputfile']	
+			elif column == 12:	
 				value = self.__processes[row]['output']
-			elif column == 12:
-				value = self.__processes[row]['status']
 			elif column == 13:
+				value = self.__processes[row]['status']
+			elif column == 14:
 				value = self.__processes[row]['closed']				
-			return value
+			return value			
 
 	def sort(self, Ncol, order):
 		self.emit(SIGNAL("layoutAboutToBeChanged()"))
@@ -112,43 +114,15 @@ class ProcessesTableModel(QtCore.QAbstractTableModel):
 				
 		elif Ncol == 9:
 			for i in range(len(self.__processes)):
-				array.append(self.__processes[i]['starttime'])           
+				array.append(self.__processes[i]['starttime'])
+		
+		elif Ncol == 10:
+			for i in range(len(self.__processes)):
+				array.append(self.__processes[i]['endtime'])
 
 		else:
 			for i in range(len(self.__processes)):
 				array.append(self.__processes[i]['status'])
-		
-		sortArrayWithArray(array, self.__processes)						# sort the services based on the values in the array
-
-		if order == Qt.AscendingOrder:									# reverse if needed
-			self.__processes.reverse()
-
-		self.__controller.updateProcessesIcon()							# to make sure the progress GIF is displayed in the right place
-			
-		self.emit(SIGNAL("layoutChanged()"))
-
-	def sort_old(self, Ncol, order):
-		self.emit(SIGNAL("layoutAboutToBeChanged()"))
-		array=[]
-		
-		if Ncol == 4:            
-			for i in range(len(self.__processes)):
-				array.append(self.__processes[i]['tabtitle'])
-				
-		if Ncol == 5:
-			for i in range(len(self.__processes)):
-				array.append(IP2Int(self.__processes[i]['hostip']))
-				
-		if Ncol == 6:
-			for i in range(len(self.__processes)):
-				if self.__processes[i]['port'] == '':
-					return
-				else:
-					array.append(int(self.__processes[i]['port']))
-				
-		if Ncol == 9:
-			for i in range(len(self.__processes)):
-				array.append(self.__processes[i]['status'])           
 		
 		sortArrayWithArray(array, self.__processes)						# sort the services based on the values in the array
 
