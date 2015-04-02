@@ -12,8 +12,10 @@ Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 '''
 
 import os
-from PyQt4.QtGui import *												# for filters dialog
+from PyQt4.QtGui import *											# for filters dialog
+from PyQt4.QtCore import *
 from app.auxiliary import *												# for timestamps
+
 
 class Validate(QtCore.QObject):											# used to validate user input on focusOut - more specifically only called to validate tool name in host/port/terminal commands tabs
 	def eventFilter(self, widget, event):
@@ -65,6 +67,19 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		
 		# TODO: maybe these shouldn't be hardcoded because the user can change them... rethink this?
    		self.defaultServicesList = ["mysql-default","mssql-default","ftp-default","postgres-default","oracle-default"]
+
+	def getStagedNmapSettings(self):
+		configFile = QtCore.QSettings('./sparta.conf', QtCore.QSettings.NativeFormat)
+		settings = dict()
+		configFile.beginGroup('StagedNmapSettings')
+		keys = configFile.childKeys()
+		for k in keys:
+			if str(k).split('-')[0] not in settings.keys():
+				settings[str(k).split('-')[0]] = dict()
+			settings[str(k).split('-')[0]].update({str(k).split('-')[1]: str(configFile.value(k).toString())})
+		configFile.endGroup()
+		return settings
+
 
 	def setupConnections(self):
  		self.browseUsersListButton.clicked.connect(lambda: self.wordlistDialog())
@@ -138,18 +153,15 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.settings.brute_default_password = str(self.defaultPassText.text())
 
 		# update TOOLS tab settings
-		self.settings.tools_nmap_stage1_ports = str(self.stage1Input.text())
-		self.settings.tools_nmap_stage2_ports = str(self.stage2Input.text())
-		self.settings.tools_nmap_stage3_ports = str(self.stage3Input.text())
-		self.settings.tools_nmap_stage4_ports = str(self.stage4Input.text())
-		self.settings.tools_nmap_stage5_ports = str(self.stage5Input.text())
+		for stage in self.settings.tools_nmap_stage:
+			self.settings.tools_nmap_stage[stage] = getattr(self, str(stage) + "-input").text()
 
 		# update AUTOMATED ATTACKS tab settings
 		if self.enableAutoAttacks.isChecked():
 			self.settings.general_enable_scheduler = 'True'
 		else:
 			self.settings.general_enable_scheduler = 'False'
-			
+
 		# TODO: seems like all the other settings should be updated here as well instead of updating them in the validation function.
 
 	#def initValues(self):												# LEO: renamed and changed the previous tabs defaults otherwise validation doesn't work the first time
@@ -165,17 +177,17 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hostLabelText.setText(' ')
 		self.hostLabelText.setReadOnly(True)
 		self.hostCommandText.setText('init value')
-		
+
 		self.portActionNameText.setText('')
 		self.portLabelText.setText(' ')
 		self.portLabelText.setReadOnly(True)
 		self.portCommandText.setText('init value')
-		
+
 		self.terminalActionNameText.setText('')
 		self.terminalLabelText.setText(' ')
 		self.terminalLabelText.setReadOnly(True)
 		self.terminalCommandText.setText('init value')
-		
+
 		# reset layouts
 		clearLayout(self.scrollVerLayout)
 		clearLayout(self.defaultBoxVerlayout)
@@ -187,43 +199,44 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.populateToolsTab()
 		self.populateAutomatedAttacksTab()
 
-	def populateGeneralTab(self):		
+	def populateGeneralTab(self):
 		self.terminalsSupported = ['gnome-terminal','xterm']
 		self.terminalComboBox.insertItems(0, self.terminalsSupported)
 
 		self.fastProcessesComboBox.setCurrentIndex(int(self.settings.general_max_fast_processes) - 1)
 		self.screenshotTextinput.setText(str(self.settings.general_screenshooter_timeout))
 		self.webServicesTextinput.setText(str(self.settings.general_web_services))
-				
+
 		if self.settings.general_tool_output_black_background == 'True' and self.checkBlackBG.isChecked() == False:
 			self.checkBlackBG.toggle()
 		elif self.settings.general_tool_output_black_background == 'False' and self.checkBlackBG.isChecked() == True:
 			self.checkBlackBG.toggle()
-		
+
 		if self.settings.brute_store_cleartext_passwords_on_exit == 'True' and self.checkStoreClearPW.isChecked() == False:
 			self.checkStoreClearPW.toggle()
 		elif self.settings.brute_store_cleartext_passwords_on_exit == 'False' and self.checkStoreClearPW.isChecked() == True:
-			self.checkStoreClearPW.toggle()		
+			self.checkStoreClearPW.toggle()
 
 	def populateBruteTab(self):
 		self.userlistPath.setText(self.settings.brute_username_wordlist_path)
-		self.passwordlistPath.setText(self.settings.brute_password_wordlist_path)			
+		self.passwordlistPath.setText(self.settings.brute_password_wordlist_path)
 		self.defaultUserText.setText(self.settings.brute_default_username)
-		self.defaultPassText.setText(self.settings.brute_default_password)	
-			
-	def populateToolsTab(self):	
+		self.defaultPassText.setText(self.settings.brute_default_password)
+
+	def populateToolsTab(self):
 		# POPULATE TOOL PATHS TAB
 		self.nmapPathInput.setText(self.settings.tools_path_nmap)
 		self.hydraPathInput.setText(self.settings.tools_path_hydra)
 		self.cutycaptPathInput.setText(self.settings.tools_path_cutycapt)
 		self.textEditorPathInput.setText(self.settings.tools_path_texteditor)
- 
+
 		# POPULATE STAGED NMAP TAB
-		self.stage1Input.setText(self.settings.tools_nmap_stage1_ports)
-		self.stage2Input.setText(self.settings.tools_nmap_stage2_ports)
-		self.stage3Input.setText(self.settings.tools_nmap_stage3_ports)
-		self.stage4Input.setText(self.settings.tools_nmap_stage4_ports)
-		self.stage5Input.setText(self.settings.tools_nmap_stage5_ports)
+		# Something isn't right here, this happens before the "stage1input" is created in original code
+		stages = self.settings.tools_nmap_stage
+		for stage in stages:
+			for i in stages[stage]:
+				setattr(self, str(stage) + "-" + i + "-input", QtGui.QLineEdit())
+				getattr(self, str(stage) + "-" + i + "-input").setText(stages[stage][i])
 
 		# POPULATE TOOLS TABS (HOST/PORT/TERMINAL)
 		self.toolForHostsTableWidget.setRowCount(len(self.settings.hostActions))
@@ -253,7 +266,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		for row in range(len(self.settings.portTerminalActions)):
 			self.terminalServicesAllTable.setItem(row, 0, QtGui.QTableWidgetItem())
 			self.terminalServicesAllTable.item(row, 0).setText(self.settings.portTerminalActions[row][3])
-				
+
 	def populateAutomatedAttacksTab(self):								# TODO: this one is still to big and ugly. needs work.
 		self.typeDic = {}
 		for i in range(len(self.settings.portActions)):
@@ -261,9 +274,9 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.typeDic.update({self.settings.portActions[i][1]:[QtGui.QLabel(),QtGui.QLineEdit(),QtGui.QCheckBox(),QtGui.QHBoxLayout()]})
 
    		for keyNum in range(len(self.settings.portActions)):
-			
+
 			# populate the automated attacks tools tab with every tool that is not a default creds check
-	 		if self.settings.portActions[keyNum][1] not in self.defaultServicesList: 
+	 		if self.settings.portActions[keyNum][1] not in self.defaultServicesList:
 
 	 			self.typeDic[self.settings.portActions[keyNum][1]][0].setText(self.settings.portActions[keyNum][1])
 	 			self.typeDic[self.settings.portActions[keyNum][1]][0].setFixedWidth(150)
@@ -271,13 +284,13 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 	 			#if self.settings.portActions[keyNum][1] in self.settings.automatedAttacks.keys():
 	 			foundToolInAA = False
 	 			for t in self.settings.automatedAttacks:
-					if self.settings.portActions[keyNum][1] == t[0]:	
+					if self.settings.portActions[keyNum][1] == t[0]:
 						#self.typeDic[self.settings.portActions[keyNum][1]][1].setText(self.settings.automatedAttacks[self.settings.portActions[keyNum][1]])
 						self.typeDic[self.settings.portActions[keyNum][1]][1].setText(t[1])
 						self.typeDic[self.settings.portActions[keyNum][1]][2].toggle()
 						foundToolInAA = True
 						break
-						
+
 	 			if not foundToolInAA:
 	 				self.typeDic[self.settings.portActions[keyNum][1]][1].setText(self.settings.portActions[keyNum][3])
 
@@ -311,10 +324,10 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  				self.defaultBoxVerlayout.addLayout(self.typeDic[self.settings.portActions[keyNum][1]][3])
 
  		self.scrollArea.setWidget(self.scrollWidget)
-   		self.globVerAutoToolsLayout.addWidget(self.scrollArea)		
-		
+   		self.globVerAutoToolsLayout.addWidget(self.scrollArea)
+
 	##################### SWITCH TAB FUNCTIONS #####################
-		
+
 	def switchTabClick(self):											# LEO: this function had duplicate code with validateCurrentTab(). so now we call that one.
 		if self.settingsTabWidget.tabText(self.settingsTabWidget.currentIndex()) == 'Tools':
 			self.previousToolTab = self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex())
@@ -323,7 +336,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		if self.validateCurrentTab(self.previousTab):					# LEO: we don't care about the return value in this case. it's just for debug.
 			print 'validation succeeded! switching tab! yay!'
 																		# save the previous tab for the next time we switch tabs. TODO: not sure this should be inside the IF but makes sense to me. no point in saving the previous if there is no change..
-			self.previousTab = self.settingsTabWidget.tabText(self.settingsTabWidget.currentIndex())			
+			self.previousTab = self.settingsTabWidget.tabText(self.settingsTabWidget.currentIndex())
 		else:
 			print 'nope! cannot let you switch tab! you fucked up!'
 
@@ -331,11 +344,11 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  		if self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex()) == 'Host Commands':
  			self.toolForHostsTableWidget.selectRow(0)
  			self.updateToolForHostInformation(False)
- 			
+
  		elif self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex()) == 'Port Commands':
  			self.toolForServiceTableWidget.selectRow(0)
  			self.updateToolForServiceInformation(False)
- 			
+
  		elif self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex()) == 'Terminal Commands':
  			self.toolForTerminalTableWidget.selectRow(0)
  			self.updateToolForTerminalInformation(False)
@@ -344,31 +357,31 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  		if self.previousToolTab == 'Tool Paths':
  			if not self.toolPathsValidate():
  		 		self.ToolSettingsTab.setCurrentIndex(0)
-  
+
   		elif self.previousToolTab == 'Host Commands':
 			if not self.validateCommandTabs(self.hostActionNameText, self.hostLabelText, self.hostCommandText):
 				self.ToolSettingsTab.setCurrentIndex(1)
 			else:
 				self.updateHostActions()
-				
+
   		elif self.previousToolTab == 'Port Commands':
 			if not self.validateCommandTabs(self.portActionNameText, self.portLabelText, self.portCommandText):
 				self.ToolSettingsTab.setCurrentIndex(2)
 			else:
 				self.updatePortActions()
-				
+
   		elif self.previousToolTab == 'Terminal Commands':
 			if not self.validateCommandTabs(self.terminalActionNameText, self.terminalLabelText, self.terminalCommandText):
 				self.ToolSettingsTab.setCurrentIndex(3)
 			else:
 				self.updateTerminalActions()
-				
+
   		elif self.previousToolTab == 'Staged Nmap':
 			if not self.validateStagedNmapTab():
 				self.ToolSettingsTab.setCurrentIndex(4)
 #			else:
 #				self.updateTerminalActions() 							# LEO: commented out because it didn't look right, please check!
- 
+
  		self.previousToolTab = self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex())
 
 	##################### AUXILIARY FUNCTIONS #####################
@@ -387,7 +400,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 	# LEO: I moved the really generic validation functions to the end of auxiliary.py and those are used by these slightly-less-generic ones.
 	# .. the difference is that these ones also take care of the IF/ELSE which was being duplicated all over the code. everything should be simpler now.
 	# note that I didn't use these everywhere because sometimes the IF/ELSE are not so straight-forward.
-	
+
 	def validateNumeric(self, widget):
 		if not validateNumeric(str(widget.text())):
 			self.toggleRedBorder(widget, True)
@@ -443,7 +456,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		else:
 			self.toggleRedBorder(widget, False)
 			return True
-		
+
 	##################### VALIDATION FUNCTIONS (per tab) #####################
 	# LEO: the functions are more or less in the same order as the tabs in the GUI (top-down and left-to-right) except for generic functions
 
@@ -475,7 +488,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  				 	validationPassed = False
 				else:
 					self.updateHostActions()
- 					
+
   			elif currentToolsTab == 'Port Commands':
   				if not self.validateCommandTabs(self.portActionNameText, self.portLabelText, self.portCommandText):
   					self.settingsTabWidget.setCurrentIndex(2)
@@ -483,7 +496,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  				 	validationPassed = False
 				else:
 					self.updatePortActions()
- 					
+
   			elif currentToolsTab == 'Terminal Commands':
   				if not self.validateCommandTabs(self.terminalActionNameText, self.terminalLabelText, self.terminalCommandText):
   					self.settingsTabWidget.setCurrentIndex(2)
@@ -491,32 +504,32 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
  				 	validationPassed = False
 				else:
 					self.updateTerminalActions()
- 					
+
  			elif currentToolsTab == 'Staged Nmap':
  				if not self.validateStagedNmapTab():
  					self.settingsTabWidget.setCurrentIndex(2)
 				 	self.ToolSettingsTab.setCurrentIndex(4)
  				 	validationPassed = False
- 			
+
  			else:
 				print '>>>> we should never be here. potential bug. 1'	# LEO: added this just to help when testing. we'll remove it later.
-		
+
 		elif tab == 'Wordlists':
 			print 'Coming back from wordlists.'
 
 		elif tab == 'Automated Attacks':
 			print 'Coming back from automated attacks.'
-		
+
 		else:
 			print '>>>> we should never be here. potential bug. 2'		# LEO: added this just to help when testing. we'll remove it later.
-		
+
 		print 'DEBUG: current tab is valid: ' + str(validationPassed)
 		return validationPassed
 
 	#def generalTabValidate(self):
 	def validateGeneralTab(self):
 		validationPassed = self.validateNumeric(self.screenshotTextinput)
-		
+
 		self.toggleRedBorder(self.webServicesTextinput, False)
 		for service in str(self.webServicesTextinput.text()).split(','):# TODO: this is too strict! no spaces or comma allowed? we can clean up for the user in some simple cases. actually, i'm not sure we even need to split.
 			if not validateString(service):
@@ -531,10 +544,10 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		validationPassed = self.validatePath(self.userlistPath)
 		validationPassed = self.validatePath(self.passwordlistPath) and validationPassed
 		validationPassed = self.validateString(self.defaultUserText) and validationPassed
-		validationPassed = self.validateString(self.defaultPassText) and validationPassed					
+		validationPassed = self.validateString(self.defaultPassText) and validationPassed
 		return validationPassed
-	
-	def toolPathsValidate(self):				
+
+	def toolPathsValidate(self):
 		validationPassed = self.validateFile(self.nmapPathInput)
 		validationPassed = self.validateFile(self.hydraPathInput) and validationPassed
 		validationPassed = self.validateFile(self.cutycaptPathInput) and validationPassed
@@ -552,14 +565,14 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.toggleRedBorder(nameInput, False)
 
 		validationPassed = self.validateStringWithSpace(labelInput) and validationPassed
-		validationPassed = self.validateCommandFormat(commandInput) and validationPassed			
+		validationPassed = self.validateCommandFormat(commandInput) and validationPassed
  		return validationPassed
 
 	# avoid using the same code for the selected tab. returns the fields for the current visible tab (host/ports/terminal)
 	# TODO: don't like this too much. seems like we could just use parameters in the validate tool name function
-	def selectGroup(self):		
+	def selectGroup(self):
  		tabSelected = -1
- 		
+
 		if self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex()) == 'Host Commands':
 			tabSelected = 1
 		elif self.ToolSettingsTab.tabText(self.ToolSettingsTab.currentIndex()) == 'Port Commands':
@@ -588,7 +601,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			tmpCommandLineEdit = self.terminalCommandText
 			actions = self.settings.portTerminalActions
 			tableRow = self.terminalTableRow
-			
+
 		return tmpWidget, tmpActionLineEdit, tmpLabelLineEdit, tmpCommandLineEdit, actions, tableRow
 
 #	def validateInput(self):											# LEO: renamed
@@ -617,7 +630,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 					if tmpWidget.item(row,0).text() != str(actions[row][1]):
 						print 'difference found'
 						actions[row][1] = tmpWidget.item(row,0).text()
-					return self.validationPassed				
+					return self.validationPassed
 
 	#def validateUniqueKey(self, widget, tablerow, text):				# LEO: renamed. +the function that calls this one already knows the selectGroup stuff so no need to duplicate.
 	def validateUniqueToolName(self, widget, tablerow, text):				# LEO: the function that calls this one already knows the selectGroup stuff so no need to duplicate.
@@ -629,11 +642,9 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 
 	#def nmapValidate(self):
 	def validateStagedNmapTab(self):									# LEO: renamed and fixed bugs. TODO: this function is being called way too often. something seems wrong in the overall logic
-		validationPassed = self.validateNmapPorts(self.stage1Input)
-		validationPassed = self.validateNmapPorts(self.stage2Input) and validationPassed
-		validationPassed = self.validateNmapPorts(self.stage3Input) and validationPassed
-		validationPassed = self.validateNmapPorts(self.stage4Input) and validationPassed
-		validationPassed = self.validateNmapPorts(self.stage5Input) and validationPassed
+		validationPassed = False
+		for stage in self.settings.tools_nmap_stage:
+			validationPassed = self.validateNmapPorts(getattr(self, str(stage) + "-input"))
 		return validationPassed
 
 	##################### TOOLS / HOST COMMANDS FUNCTIONS #####################
@@ -653,7 +664,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 
 	def removeToolForHost(self):
 		row = self.toolForHostsTableWidget.currentRow()
-		
+
 		# set default values to avoid the error when the first action is add and remove tools
 		self.hostActionNameText.setText('removed')
 		self.hostLabelText.setText('removed')
@@ -677,7 +688,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.settings.hostActions[self.hostTableRow][2] = str(self.hostCommandText.text())
 
 	# update variable -> do not update the values when a line is removed
-	def updateToolForHostInformation(self, update = True):		
+	def updateToolForHostInformation(self, update = True):
 		#if self.commandTabsValidate() == True:
 		if self.validateCommandTabs(self.hostActionNameText, self.hostLabelText, self.hostCommandText):
 
@@ -686,7 +697,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 				pass
 			else:
 				self.updateHostActions()
-			
+
 #			self.hostLabelText.setStyleSheet("border: 1px solid grey;")
 #			self.hostCommandText.setStyleSheet("border: 1px solid grey;")
 			self.hostTableRow = self.toolForHostsTableWidget.currentRow()
@@ -721,7 +732,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.settings.portActions.append(['', 'New_Action_'+str(self.portActionsNumber), ''])
 			self.portActionsNumber +=1
 			self.updateToolForServiceInformation()
-	
+
 	def removeToolForService(self):
 		row = self.toolForServiceTableWidget.currentRow()
 		self.portActionNameText.setText('removed')
@@ -754,7 +765,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 #			self.portCommandText.setStyleSheet("border: 1px solid grey;")
 			self.portTableRow = self.toolForServiceTableWidget.currentRow()
 			self.portLabelText.setReadOnly(False)
-			
+
 			if self.toolForServiceTableWidget.item(self.portTableRow, 0) is not None:
 				key = self.toolForServiceTableWidget.item(self.portTableRow, 0).text()
 				for tool in self.settings.portActions:
@@ -762,7 +773,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 						self.portActionNameText.setText(tool[1])
 						self.portLabelText.setText(tool[0])
 						self.portCommandText.setText(tool[2])
-						#  for the case that the tool (ex. new added tool) does not have services assigned 
+						#  for the case that the tool (ex. new added tool) does not have services assigned
 						if len(tool) == 4:
 							servicesList = tool[3].split(',')
 							self.terminalServicesActiveTable.setRowCount(len(servicesList))
@@ -773,7 +784,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.toolForServiceTableWidget.selectRow(self.portTableRow)
 
 	##################### TOOLS / TERMINAL COMMANDS FUNCTIONS #####################
-			
+
 	def addToolForTerminal(self):
 		#if self.commandTabsValidate():
 		if self.validateCommandTabs(self.terminalActionNameText, self.terminalLabelText, self.terminalCommandText):
@@ -785,7 +796,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.settings.portTerminalActions.append(['', 'New_Action_'+str(self.terminalActionsNumber), ''])
 			self.terminalActionsNumber +=1
 			self.updateToolForTerminalInformation()
-	
+
 	def removeToolForTerminal(self):
 		row = self.toolForTerminalTableWidget.currentRow()
 		self.terminalActionNameText.setText('removed')
@@ -799,7 +810,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.toolForTerminalTableWidget.selectRow(row-1)
 		self.portTableRow = self.toolForTerminalTableWidget.currentRow()
 		self.updateToolForTerminalInformation(False)
-		
+
 	def updateTerminalActions(self):
 		self.settings.portTerminalActions[self.terminalTableRow][0] = str(self.terminalLabelText.text())
 		self.settings.portTerminalActions[self.terminalTableRow][2] = str(self.terminalCommandText.text())
@@ -825,7 +836,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 						self.terminalActionNameText.setText(tool[1])
 						self.terminalLabelText.setText(tool[0])
 						self.terminalCommandText.setText(tool[2])
-						#  for the case that the tool (ex. new added tool) does not have any service assigned 
+						#  for the case that the tool (ex. new added tool) does not have any service assigned
 						if len(tool) == 4:
 							servicesList = tool[3].split(',')
 							self.terminalServicesActiveTable.setRowCount(len(servicesList))
@@ -844,7 +855,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 			self.AutoAttacksSettingsTab.setTabEnabled(1,False)
 
 	#def selectDefaultServices(self):									# toggles select/deselect all default creds checkboxes
-	def toggleDefaultServices(self):									# toggles select/deselect all default creds checkboxes	
+	def toggleDefaultServices(self):									# toggles select/deselect all default creds checkboxes
 		for service in self.defaultServicesList:
 			if not self.typeDic[service][2].isChecked() == self.checkDefaultCred.isChecked():
 				self.typeDic[service][2].toggle()
@@ -868,7 +879,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.settingsTabWidget = QtGui.QTabWidget()
 		self.settingsTabWidget.setTabBar(SettingsTabBarWidget(width=200,height=25))
 		self.settingsTabWidget.setTabPosition(QtGui.QTabWidget.West)	# put the tab titles on the left
-		
+
 		# left tab menu items
 		self.GeneralSettingsTab = QtGui.QWidget()
 		self.BruteSettingsTab = QtGui.QWidget()
@@ -880,7 +891,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.setupBruteTab()
 		self.setupToolsTab()
 		self.setupAutomatedAttacksTab()
-		
+
 		self.settingsTabWidget.addTab(self.GeneralSettingsTab,"General")
 		self.settingsTabWidget.addTab(self.BruteSettingsTab,"Brute")
 		self.settingsTabWidget.addTab(self.ToolSettingsTab,"Tools")
@@ -888,20 +899,20 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.settingsTabWidget.addTab(self.AutoAttacksSettingsTab,"Automated Attacks")
 
 		self.settingsTabWidget.setCurrentIndex(0)
-		
+
 		self.flayout.addWidget(self.settingsTabWidget)
-		
+
 		self.horLayout1 = QtGui.QHBoxLayout()
 		self.cancelButton = QPushButton('Cancel')
 		self.cancelButton.setMaximumSize(60, 30)
 		self.applyButton = QPushButton('Apply')
 		self.applyButton.setMaximumSize(60, 30)
 		self.spacer2 = QSpacerItem(750,0)
-		self.horLayout1.addItem(self.spacer2)	
+		self.horLayout1.addItem(self.spacer2)
 		self.horLayout1.addWidget(self.applyButton)
 		self.horLayout1.addWidget(self.cancelButton)
 
-		self.flayout.addLayout(self.horLayout1)		
+		self.flayout.addLayout(self.horLayout1)
 		self.setLayout(self.flayout)
 
 	def setupGeneralTab(self):
@@ -917,7 +928,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayout1.addWidget(self.terminalLabel)
 		self.hlayout1.addWidget(self.terminalComboBox)
 		self.hlayout1.addStretch()
-			
+
 		self.label3 = QtGui.QLabel()
 		self.label3.setText('Maximum processes')
 		self.label3.setFixedWidth(150)
@@ -945,7 +956,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_2.addWidget(self.label1)
 		self.hlayoutGeneral_2.addWidget(self.screenshotTextinput)
 		self.hlayoutGeneral_2.addStretch()
-		
+
 		self.label2 = QtGui.QLabel()
 		self.label2.setText('Web services')
 		self.label2.setFixedWidth(150)
@@ -955,7 +966,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_3.addWidget(self.label2)
 		self.hlayoutGeneral_3.addWidget(self.webServicesTextinput)
 		self.hlayoutGeneral_3.addStretch()
-		
+
 		self.checkStoreClearPW = QtGui.QCheckBox()
 		self.checkStoreClearPW.setText('Store cleartext passwords on exit')
 		self.hlayoutGeneral_6 = QtGui.QHBoxLayout()
@@ -966,9 +977,9 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayout2 = QtGui.QHBoxLayout()
 		self.hlayout2.addWidget(self.checkBlackBG)
 
-		self.vlayoutGeneral = QtGui.QVBoxLayout(self.GeneralSettingsTab)		
+		self.vlayoutGeneral = QtGui.QVBoxLayout(self.GeneralSettingsTab)
 		self.vlayoutGeneral.addLayout(self.hlayout1)
-		self.vlayoutGeneral.addLayout(self.hlayoutGeneral_4)		
+		self.vlayoutGeneral.addLayout(self.hlayoutGeneral_4)
 		self.vlayoutGeneral.addLayout(self.hlayoutGeneral_2)
 		self.vlayoutGeneral.addLayout(self.hlayoutGeneral_3)
 		self.vlayoutGeneral.addLayout(self.hlayoutGeneral_6)
@@ -979,7 +990,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 
 	def setupBruteTab(self):
 		self.vlayoutBrute = QtGui.QVBoxLayout(self.BruteSettingsTab)
-		
+
 		self.label5 = QtGui.QLabel()
 		self.label5.setText('Username lists path')
 		self.label5.setFixedWidth(150)
@@ -992,7 +1003,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_7.addWidget(self.userlistPath)
 		self.hlayoutGeneral_7.addWidget(self.browseUsersListButton)
 		self.hlayoutGeneral_7.addStretch()
-		
+
 		self.label6 = QtGui.QLabel()
 		self.label6.setText('Password lists path')
 		self.label6.setFixedWidth(150)
@@ -1005,7 +1016,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_8.addWidget(self.passwordlistPath)
 		self.hlayoutGeneral_8.addWidget(self.browsePasswordsListButton)
 		self.hlayoutGeneral_8.addStretch()
-		
+
 		self.label7 = QtGui.QLabel()
 		self.label7.setText('Default username')
 		self.label7.setFixedWidth(150)
@@ -1015,7 +1026,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_9.addWidget(self.label7)
 		self.hlayoutGeneral_9.addWidget(self.defaultUserText)
 		self.hlayoutGeneral_9.addStretch()
-		
+
 		self.label8 = QtGui.QLabel()
 		self.label8.setText('Default password')
 		self.label8.setFixedWidth(150)
@@ -1025,11 +1036,11 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hlayoutGeneral_10.addWidget(self.label8)
 		self.hlayoutGeneral_10.addWidget(self.defaultPassText)
 		self.hlayoutGeneral_10.addStretch()
-		
+
 		self.vlayoutBrute.addLayout(self.hlayoutGeneral_7)
 		self.vlayoutBrute.addLayout(self.hlayoutGeneral_8)
 		self.vlayoutBrute.addLayout(self.hlayoutGeneral_9)
-		self.vlayoutBrute.addLayout(self.hlayoutGeneral_10)		
+		self.vlayoutBrute.addLayout(self.hlayoutGeneral_10)
 		self.bruteSpacer = QSpacerItem(10,380)
 		self.vlayoutBrute.addItem(self.bruteSpacer)
 
@@ -1044,7 +1055,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.ToolSettingsTab.addTab(self.portTerminalActionsWidget, "Terminal Commands")
 		self.StagedNmapWidget = QtGui.QWidget()
 		self.ToolSettingsTab.addTab(self.StagedNmapWidget, "Staged Nmap")
-		
+
 		self.setupToolPathsTab()
 		self.setupHostCommandsTab()
 		self.setupPortCommandsTab()
@@ -1060,7 +1071,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.nmapPathHorLayout.addWidget(self.nmapPathlabel)
 		self.nmapPathHorLayout.addWidget(self.nmapPathInput)
 		self.nmapPathHorLayout.addStretch()
-		
+
 		self.hydraPathlabel = QtGui.QLabel()
 		self.hydraPathlabel.setText('Hydra')
 		self.hydraPathlabel.setFixedWidth(100)
@@ -1069,7 +1080,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hydraPathHorLayout.addWidget(self.hydraPathlabel)
 		self.hydraPathHorLayout.addWidget(self.hydraPathInput)
 		self.hydraPathHorLayout.addStretch()
-		
+
 		self.cutycaptPathlabel = QtGui.QLabel()
 		self.cutycaptPathlabel.setText('Cutycapt')
 		self.cutycaptPathlabel.setFixedWidth(100)
@@ -1078,7 +1089,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathlabel)
 		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathInput)
 		self.cutycaptPathHorLayout.addStretch()
-		
+
 		self.textEditorPathlabel = QtGui.QLabel()
 		self.textEditorPathlabel.setText('Text editor')
 		self.textEditorPathlabel.setFixedWidth(100)
@@ -1087,8 +1098,8 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.textEditorPathHorLayout.addWidget(self.textEditorPathlabel)
 		self.textEditorPathHorLayout.addWidget(self.textEditorPathInput)
 		self.textEditorPathHorLayout.addStretch()
-		
-		self.toolsPathVerLayout = QtGui.QVBoxLayout()		
+
+		self.toolsPathVerLayout = QtGui.QVBoxLayout()
 		self.toolsPathVerLayout.addLayout(self.nmapPathHorLayout)
 		self.toolsPathVerLayout.addLayout(self.hydraPathHorLayout)
 		self.toolsPathVerLayout.addLayout(self.cutycaptPathHorLayout)
@@ -1098,7 +1109,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.globToolsPathHorLayout = QtGui.QHBoxLayout(self.ToolPathsWidget)
 		self.globToolsPathHorLayout.addLayout(self.toolsPathVerLayout)
 		self.toolsPathHorSpacer = QSpacerItem(50,0)						# right margin spacer
-		self.globToolsPathHorLayout.addItem(self.toolsPathHorSpacer)		
+		self.globToolsPathHorLayout.addItem(self.toolsPathHorSpacer)
 
 	def setupHostCommandsTab(self):
 		self.toolForHostsTableWidget = QtGui.QTableWidget(self.HostActionsWidget)
@@ -1114,7 +1125,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.toolForHostsTableWidget.horizontalHeader().setVisible(False)
 		self.toolForHostsTableWidget.verticalHeader().setVisible(False)	# row header - is hidden
 		self.toolForHostsTableWidget.setVerticalHeaderItem(0, QtGui.QTableWidgetItem())
-		
+
 		self.horLayoutPortActions = QtGui.QHBoxLayout()
 		self.removeToolForHostButton = QPushButton('Remove')
 		self.removeToolForHostButton.setMaximumSize(90, 30)
@@ -1122,17 +1133,17 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.addToolForHostButton.setMaximumSize(90, 30)
 		self.horLayoutPortActions.addWidget(self.addToolForHostButton)
 		self.horLayoutPortActions.addWidget(self.removeToolForHostButton)
-		
+
 		self.actionHost = QtGui.QLabel()
 		self.actionHost.setText('Tools')
-		
+
 		self.verLayoutPortActions = QtGui.QVBoxLayout()
 		self.verLayoutPortActions.addWidget(self.actionHost)
 		self.verLayoutPortActions.addWidget(self.toolForHostsTableWidget)
 		self.verLayoutPortActions.addLayout(self.horLayoutPortActions)
-		
+
 		self.verLayout1 = QtGui.QVBoxLayout()
-		
+
 		self.horLayout4 = QtGui.QHBoxLayout()
 		self.label12 = QtGui.QLabel()
 		self.label12.setText('Tool')
@@ -1141,7 +1152,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 
 		self.horLayout4.addWidget(self.label12)
 		self.horLayout4.addWidget(self.hostActionNameText)
-		
+
 		self.label9 = QtGui.QLabel()
 		self.label9.setText('Label')
 		self.label9.setFixedWidth(70)
@@ -1153,7 +1164,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.horLayout1 = QtGui.QHBoxLayout()
 		self.horLayout1.addWidget(self.label9)
 		self.horLayout1.addWidget(self.hostLabelText)
-		
+
 		self.horLayout2 = QtGui.QHBoxLayout()
 		self.label10 = QtGui.QLabel()
 		self.label10.setText('Command')
@@ -1162,8 +1173,8 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hostCommandText = QtGui.QLineEdit()
 		self.hostCommandText.setText('init value')
 		self.horLayout2.addWidget(self.label10)
-		self.horLayout2.addWidget(self.hostCommandText)		
-		
+		self.horLayout2.addWidget(self.hostCommandText)
+
 		self.spacer6 = QSpacerItem(0,20)
 		self.verLayout1.addItem(self.spacer6)
 		self.verLayout1.addLayout(self.horLayout4)
@@ -1171,7 +1182,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.verLayout1.addLayout(self.horLayout2)
 		self.spacer1 = QSpacerItem(0,800)
 		self.verLayout1.addItem(self.spacer1)
-		
+
 		self.globLayoutPortActions = QtGui.QHBoxLayout(self.HostActionsWidget)
 		self.globLayoutPortActions.addLayout(self.verLayoutPortActions)
 		self.spacer5 = QSpacerItem(10,0)
@@ -1197,10 +1208,10 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.toolForServiceTableWidget.horizontalHeader().setVisible(False)
 		self.toolForServiceTableWidget.verticalHeader().setVisible(False)
 		self.toolForServiceTableWidget.setVerticalHeaderItem(0, QtGui.QTableWidgetItem())
-		
+
 		self.horLayoutPortActions = QtGui.QHBoxLayout()
 		self.addToolButton = QPushButton('Add')
-		self.addToolButton.setMaximumSize(90, 30)		
+		self.addToolButton.setMaximumSize(90, 30)
 		self.removeToolButton = QPushButton('Remove')
 		self.removeToolButton.setMaximumSize(90, 30)
 		self.horLayoutPortActions.addWidget(self.addToolButton)
@@ -1208,7 +1219,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 
 		self.verLayoutPortActions = QtGui.QVBoxLayout()
 		self.verLayoutPortActions.addWidget(self.label11)
-		self.verLayoutPortActions.addWidget(self.toolForServiceTableWidget)		
+		self.verLayoutPortActions.addWidget(self.toolForServiceTableWidget)
 		self.verLayoutPortActions.addLayout(self.horLayoutPortActions)
 
 		self.verLayout1 = QtGui.QVBoxLayout()
@@ -1220,7 +1231,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.portActionNameText = QtGui.QLineEdit()
 		self.horLayout4.addWidget(self.label12)
 		self.horLayout4.addWidget(self.portActionNameText)
-		
+
 		self.horLayout1 = QtGui.QHBoxLayout()
 		self.label9 = QtGui.QLabel()
 		self.label9.setText('Label')
@@ -1239,7 +1250,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.portCommandText.setText('init value')
 		self.horLayout2.addWidget(self.label10)
 		self.horLayout2.addWidget(self.portCommandText)
-		
+
 		self.servicesAllTableWidget = QtGui.QTableWidget()
 		self.servicesAllTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
 		self.servicesAllTableWidget.setMaximumSize(150, 300)
@@ -1261,27 +1272,27 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.servicesActiveTableWidget.horizontalHeader().setVisible(False)
 		self.servicesActiveTableWidget.setShowGrid(False)
 		self.servicesActiveTableWidget.verticalHeader().setVisible(False)
-		
+
 		self.verLayout2 = QtGui.QVBoxLayout()
-		
+
 		self.addServicesButton = QPushButton('-->')
 		self.addServicesButton.setMaximumSize(30, 30)
 		self.removeServicesButton = QPushButton('<--')
 		self.removeServicesButton.setMaximumSize(30, 30)
-		
+
 		self.spacer4 = QSpacerItem(0,90)								# space above and below arrow buttons
 		self.verLayout2.addItem(self.spacer4)
 		self.verLayout2.addWidget(self.addServicesButton)
-		self.verLayout2.addWidget(self.removeServicesButton)		
+		self.verLayout2.addWidget(self.removeServicesButton)
 		self.verLayout2.addItem(self.spacer4)
-		
+
 		self.horLayout3 = QtGui.QHBoxLayout()							# space left of multiple choice widget
 		self.spacer3 = QSpacerItem(78,0)
 		self.horLayout3.addItem(self.spacer3)
 		self.horLayout3.addWidget(self.servicesAllTableWidget)
 		self.horLayout3.addLayout(self.verLayout2)
 		self.horLayout3.addWidget(self.servicesActiveTableWidget)
-		
+
 		self.spacer6 = QSpacerItem(0,20)								# top right space
 		self.verLayout1.addItem(self.spacer6)
 		self.verLayout1.addLayout(self.horLayout4)
@@ -1290,20 +1301,20 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.verLayout1.addLayout(self.horLayout3)
 		self.spacer1 = QSpacerItem(0,50)								# bottom right space
 		self.verLayout1.addItem(self.spacer1)
-		
-		self.globLayoutPortActions = QtGui.QHBoxLayout(self.PortActionsWidget)			
+
+		self.globLayoutPortActions = QtGui.QHBoxLayout(self.PortActionsWidget)
 		self.globLayoutPortActions.addLayout(self.verLayoutPortActions)
-		
+
 		self.spacer5 = QSpacerItem(10,0)								# space between left and right layouts
-		self.globLayoutPortActions.addItem(self.spacer5)		
+		self.globLayoutPortActions.addItem(self.spacer5)
 		self.globLayoutPortActions.addLayout(self.verLayout1)
 		self.spacer2 = QSpacerItem(50,0)								# right margin space
 		self.globLayoutPortActions.addItem(self.spacer2)
 
-	def setupTerminalCommandsTab(self):		
+	def setupTerminalCommandsTab(self):
 		self.actionTerminalLabel = QtGui.QLabel()
-		self.actionTerminalLabel.setText('Tools')		
-		
+		self.actionTerminalLabel.setText('Tools')
+
 		self.toolForTerminalTableWidget = QtGui.QTableWidget(self.portTerminalActionsWidget)
 		self.toolForTerminalTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
 		self.toolForTerminalTableWidget.setFixedWidth(180)
@@ -1312,16 +1323,16 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.toolForTerminalTableWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
 																		# table headers
 		self.toolForTerminalTableWidget.setColumnCount(1)
-		self.toolForTerminalTableWidget.setHorizontalHeaderItem(0, QtGui.QTableWidgetItem())		
-		self.toolForTerminalTableWidget.horizontalHeaderItem(0).setText("Name")		
-		self.toolForTerminalTableWidget.horizontalHeader().resizeSection(0,200)		
+		self.toolForTerminalTableWidget.setHorizontalHeaderItem(0, QtGui.QTableWidgetItem())
+		self.toolForTerminalTableWidget.horizontalHeaderItem(0).setText("Name")
+		self.toolForTerminalTableWidget.horizontalHeader().resizeSection(0,200)
 		self.toolForTerminalTableWidget.horizontalHeader().setVisible(False)
 		self.toolForTerminalTableWidget.verticalHeader().setVisible(False)
 		self.toolForTerminalTableWidget.setVerticalHeaderItem(0, QtGui.QTableWidgetItem())
-		
+
 		self.horLayout1 = QtGui.QHBoxLayout()
 		self.addToolForTerminalButton = QPushButton('Add')
-		self.addToolForTerminalButton.setMaximumSize(90, 30)		
+		self.addToolForTerminalButton.setMaximumSize(90, 30)
 		self.removeToolForTerminalButton = QPushButton('Remove')
 		self.removeToolForTerminalButton.setMaximumSize(90, 30)
 		self.horLayout1.addWidget(self.addToolForTerminalButton)
@@ -1331,15 +1342,15 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.verLayout1.addWidget(self.actionTerminalLabel)
 		self.verLayout1.addWidget(self.toolForTerminalTableWidget)
 		self.verLayout1.addLayout(self.horLayout1)
-		
+
 		self.horLayout2 = QtGui.QHBoxLayout()
 		self.actionNameTerminalLabel = QtGui.QLabel()
 		self.actionNameTerminalLabel.setText('Tool')
 		self.actionNameTerminalLabel.setFixedWidth(70)
-		self.terminalActionNameText = QtGui.QLineEdit()		
+		self.terminalActionNameText = QtGui.QLineEdit()
 		self.horLayout2.addWidget(self.actionNameTerminalLabel)
 		self.horLayout2.addWidget(self.terminalActionNameText)
-		
+
 		self.horLayout3 = QtGui.QHBoxLayout()
 		self.labelTerminalLabel = QtGui.QLabel()
 		self.labelTerminalLabel.setText('Label')
@@ -1349,7 +1360,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.terminalLabelText.setReadOnly(True)
 		self.horLayout3.addWidget(self.labelTerminalLabel)
 		self.horLayout3.addWidget(self.terminalLabelText)
-		
+
 		self.horLayout4 = QtGui.QHBoxLayout()
 		self.commandTerminalLabel = QtGui.QLabel()
 		self.commandTerminalLabel.setText('Command')
@@ -1358,7 +1369,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.terminalCommandText.setText('init value')
 		self.horLayout4.addWidget(self.commandTerminalLabel)
 		self.horLayout4.addWidget(self.terminalCommandText)
-		
+
 		self.terminalServicesAllTable = QtGui.QTableWidget()
 		self.terminalServicesAllTable.setSelectionBehavior(QAbstractItemView.SelectRows)
 		self.terminalServicesAllTable.setMaximumSize(150, 300)
@@ -1367,9 +1378,9 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.terminalServicesAllTable.setHorizontalHeaderItem(0, QtGui.QTableWidgetItem())
 		self.terminalServicesAllTable.horizontalHeaderItem(0).setText("Available Services")
 		self.terminalServicesAllTable.horizontalHeader().setVisible(False)
-		self.terminalServicesAllTable.setShowGrid(False)		
+		self.terminalServicesAllTable.setShowGrid(False)
 		self.terminalServicesAllTable.verticalHeader().setVisible(False)
-		
+
 		self.terminalServicesActiveTable = QtGui.QTableWidget()
 		self.terminalServicesActiveTable.setSelectionBehavior(QAbstractItemView.SelectRows)
 		self.terminalServicesActiveTable.setMaximumSize(150, 300)
@@ -1380,26 +1391,26 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.terminalServicesActiveTable.horizontalHeader().setVisible(False)
 		self.terminalServicesActiveTable.setShowGrid(False)
 		self.terminalServicesActiveTable.verticalHeader().setVisible(False)
-		
+
 		self.addTerminalServiceButton = QPushButton('-->')
 		self.addTerminalServiceButton.setMaximumSize(30, 30)
 		self.removeTerminalServiceButton = QPushButton('<--')
 		self.removeTerminalServiceButton.setMaximumSize(30, 30)
-		
+
 		self.verLayout3 = QtGui.QVBoxLayout()
 		self.spacer2 = QSpacerItem(0,90)
 		self.verLayout3.addItem(self.spacer2)
 		self.verLayout3.addWidget(self.addTerminalServiceButton)
 		self.verLayout3.addWidget(self.removeTerminalServiceButton)
 		self.verLayout3.addItem(self.spacer2)
-		
+
 		self.horLayout5 = QtGui.QHBoxLayout()
 		self.spacer3 = QSpacerItem(78,0)
 		self.horLayout5.addItem(self.spacer3)
 		self.horLayout5.addWidget(self.terminalServicesAllTable)
 		self.horLayout5.addLayout(self.verLayout3)
 		self.horLayout5.addWidget(self.terminalServicesActiveTable)
-		
+
 		self.verLayout2 = QtGui.QVBoxLayout()
 		self.spacer4 = QSpacerItem(0,20)
 		self.verLayout2.addItem(self.spacer4)
@@ -1409,7 +1420,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.verLayout2.addLayout(self.horLayout5)
 		self.spacer5 = QSpacerItem(0,50)
 		self.verLayout2.addItem(self.spacer5)
-		
+
 		self.globLayoutTerminalActions = QtGui.QHBoxLayout(self.portTerminalActionsWidget)
 		self.globLayoutTerminalActions.addLayout(self.verLayout1)
 		self.spacer6 = QSpacerItem(10,0)
@@ -1419,57 +1430,22 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.globLayoutTerminalActions.addItem(self.spacer7)
 
 	def setupStagedNmapTab(self):
-		self.stage1label = QtGui.QLabel()
-		self.stage1label.setText('nmap stage 1')
-		self.stage1label.setFixedWidth(100)
-		self.stage1Input = QtGui.QLineEdit()
-		self.stage1Input.setFixedWidth(500)
-		self.hlayout1 = QtGui.QHBoxLayout()
-		self.hlayout1.addWidget(self.stage1label)
-		self.hlayout1.addWidget(self.stage1Input)
-		
-		self.stage2label = QtGui.QLabel()
-		self.stage2label.setText('nmap stage 2')
-		self.stage2label.setFixedWidth(100)
-		self.stage2Input = QtGui.QLineEdit()
-		self.stage2Input.setFixedWidth(500)
-		self.hlayout2 = QtGui.QHBoxLayout()
-		self.hlayout2.addWidget(self.stage2label)
-		self.hlayout2.addWidget(self.stage2Input)
-		
-		self.stage3label = QtGui.QLabel()
-		self.stage3label.setText('nmap stage 3')
-		self.stage3label.setFixedWidth(100)
-		self.stage3Input = QtGui.QLineEdit()
-		self.stage3Input.setFixedWidth(500)
-		self.hlayout3 = QtGui.QHBoxLayout()
-		self.hlayout3.addWidget(self.stage3label)
-		self.hlayout3.addWidget(self.stage3Input)
-		
-		self.stage4label = QtGui.QLabel()
-		self.stage4label.setText('nmap stage 4')
-		self.stage4label.setFixedWidth(100)
-		self.stage4Input = QtGui.QLineEdit()
-		self.stage4Input.setFixedWidth(500)
-		self.hlayout4 = QtGui.QHBoxLayout()
-		self.hlayout4.addWidget(self.stage4label)
-		self.hlayout4.addWidget(self.stage4Input)
-		
-		self.stage5label = QtGui.QLabel()
-		self.stage5label.setText('nmap stage 5')
-		self.stage5label.setFixedWidth(100)
-		self.stage5Input = QtGui.QLineEdit()
-		self.stage5Input.setFixedWidth(500)
-		self.hlayout5 = QtGui.QHBoxLayout()
-		self.hlayout5.addWidget(self.stage5label)
-		self.hlayout5.addWidget(self.stage5Input)
-		
-		self.vlayout1 = QtGui.QVBoxLayout()		
-		self.vlayout1.addLayout(self.hlayout1)
-		self.vlayout1.addLayout(self.hlayout2)
-		self.vlayout1.addLayout(self.hlayout3)
-		self.vlayout1.addLayout(self.hlayout4)
-		self.vlayout1.addLayout(self.hlayout5)
+
+		self.vlayout1 = QtGui.QVBoxLayout()
+
+		stages = self.getStagedNmapSettings()
+		for stage in stages:
+			for i in stages[stage]:
+				setattr(self, str(stage) + "-" + i +  "-label", QtGui.QLabel())
+				getattr(self,str(stage) + "-" + i + "-label").setText('nmap ' + str(stages[stage][i]))
+				getattr(self,str(stage) + "-" + i + "-label").setFixedWidth(100)
+				setattr(self, str(stage) + "-" + i + "-input", QtGui.QLineEdit())
+				getattr(self,str(stage) + "-" + i + "-input").setFixedWidth(500)
+				setattr(self, str(stage) + "-" + i + "-hlayout", QtGui.QHBoxLayout())
+				getattr(self,str(stage) + "-" + i + "-hlayout").addWidget(getattr(self, str(stage) + "-" + i  + "-label"))
+				getattr(self,str(stage) + "-" + i + "-hlayout").addWidget(getattr(self, str(stage) + "-" + i  + "-input"))
+				self.vlayout1.addLayout(getattr(self, str(stage) + "-" + i  + "-hlayout"))
+
 		self.vlayout1.addStretch()
 
 		self.gHorLayout = QtGui.QHBoxLayout(self.StagedNmapWidget)
