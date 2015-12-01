@@ -11,14 +11,18 @@ import pprint
 import logging
 import Session, Host, Script
 import xml.dom.minidom
+from os.path import isfile
 
 class Parser:
 
 	'''Parser class, parse a xml format nmap report'''
 	def __init__( self, xml_input ):
-		'''constructor function, need a xml file name as the argument'''
+		'''constructor function, need a xml file name or xml string as the argument'''
 		try:
-			self.__dom = xml.dom.minidom.parse(xml_input)
+            if isfile(xml_input):
+                self.__dom = xml.dom.minidom.parse(xml_input)
+            else:
+                self.__dom = xml.dom.minidom.parseString(xml_input)
 			self.__session = None
 			self.__hosts = { }
 			for host_node in self.__dom.getElementsByTagName('host'):
@@ -116,7 +120,7 @@ if __name__ == '__main__':
 		print 'host ' +h.ip + ' is ' + h.status
 
 		for port in h.get_ports( 'tcp', 'open' ):
-			print "\t---------------------------------------------------"	
+			print "\t---------------------------------------------------"
 			print "\tservice of tcp port " + port + ":"
 			s = h.get_service( 'tcp', port )
 
@@ -132,10 +136,10 @@ if __name__ == '__main__':
 
 			print "\tscript output:"
 			sc = port.get_scripts()
-			
+
 			if sc == None:
 				print "\t\tno scripts"
-			
+
 			else:
 				for scr in sc:
 					print "Script ID: " + scr.scriptId
