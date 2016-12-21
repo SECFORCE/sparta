@@ -4,11 +4,11 @@
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
 Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
-    This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 import sys, os, ntpath, signal, re										# for file operations, to kill processes and for regex
@@ -163,7 +163,7 @@ class View(QtCore.QObject):
 		setTableProperties(self.ui.ServiceNamesTableView, len(headers))
 
 		# tools table (left)
- 		headers = ["Progress","Display","Pid","Tool","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status"]
+		headers = ["Progress","Display","Pid","Tool","Tool","Host","Port","Protocol","Command","Start time","OutputFile","Output","Status"]
 		setTableProperties(self.ui.ToolsTableView, len(headers), [0,1,2,4,5,6,7,8,9,10,11,12,13])
 
 		# service table (right)
@@ -388,23 +388,27 @@ class View(QtCore.QObject):
 
 	def importNmap(self):
 		self.ui.statusbar.showMessage('Importing nmap xml..', msecs=1000)
-		filename = QtGui.QFileDialog.getOpenFileName(self.ui.centralwidget, 'Choose nmap file', self.controller.getCWD(), filter='XML file (*.xml)')
-		
-		if not filename == '':
+		directory_name = QtGui.QFileDialog.getExistingDirectory(self.ui.centralwidget, 'Choose nmap directory', self.controller.getCWD())
+	   
+		if not directory_name == '':
+			QtGui.QMessageBox.information(self.ui.centralwidget, 'Processing', "xml files are beeing imported, please wait ...")
+			for filename in os.listdir(directory_name):
+				if filename.endswith('.xml'):
+					filename = os.path.join(str(directory_name), filename)
+					if not os.access(filename, os.R_OK):                        # check for read permissions on the xml file
+						print '[-] Insufficient permissions to read this file.'
+						reply = QtGui.QMessageBox.warning(self.ui.centralwidget, 'Warning', "You don't have the necessary permissions to read this file.","Ok")
+						return
 
-			if not os.access(filename, os.R_OK):						# check for read permissions on the xml file
-				print '[-] Insufficient permissions to read this file.'
-				reply = QtGui.QMessageBox.warning(self.ui.centralwidget, 'Warning', "You don't have the necessary permissions to read this file.","Ok")
-				return
-
-			self.importProgressWidget.reset('Importing nmap..')	
-			self.controller.nmapImporter.setFilename(str(filename))
-			self.controller.nmapImporter.start()
-			self.controller.copyNmapXMLToOutputFolder(str(filename))
-			self.importProgressWidget.show()
-			
+					# self.importProgressWidget.reset('Importing nmap..')   
+					self.controller.nmapImporter.setFilename(str(filename))
+					self.controller.nmapImporter.start()
+					self.controller.copyNmapXMLToOutputFolder(str(filename))
+					self.importProgressWidget.show()
+					time.sleep(1)
+		   
 		else:
-			print '\t[-] No file chosen..'	
+			print '\t[-] No Directory chosen..'	
 
 	###
 
@@ -441,8 +445,8 @@ class View(QtCore.QObject):
 
 	### TABLE ACTIONS ###
 
- 	def connectAddHostsOverlayClick(self):
- 		self.ui.addHostsOverlay.selectionChanged.connect(self.connectAddHostsDialog)
+	def connectAddHostsOverlayClick(self):
+		self.ui.addHostsOverlay.selectionChanged.connect(self.connectAddHostsDialog)
 
 	def connectHostTableClick(self):
 		self.ui.HostsTableView.clicked.connect(self.hostTableClick)
@@ -632,12 +636,12 @@ class View(QtCore.QObject):
 		self.ui.MainTabWidget.tabBar().setTabTextColor(1, QtGui.QColor())		# in case the Brute tab was red because hydra found stuff, change it back to black
 
 	###
- 	def setVisible(self):												# indicates that a context menu is showing so that the ui doesn't get updated disrupting the user
- 		self.menuVisible = True
+	def setVisible(self):												# indicates that a context menu is showing so that the ui doesn't get updated disrupting the user
+		self.menuVisible = True
 
- 	def setInvisible(self):												# indicates that a context menu has now closed and any pending ui updates can take place now
- 		self.menuVisible = False
- 	###
+	def setInvisible(self):												# indicates that a context menu has now closed and any pending ui updates can take place now
+		self.menuVisible = False
+	###
 	
 	def connectHostsTableContextMenu(self):
 		self.ui.HostsTableView.customContextMenuRequested.connect(self.contextMenuHostsTableView)
@@ -738,15 +742,15 @@ class View(QtCore.QObject):
 					self.controller.handlePortAction(targets, actions, terminalActions, action, restore)	
 			
 			else:														# in case there was no port, we show the host menu (without the portscan / mark as checked)
- 				menu, actions = self.controller.getContextMenuForHost(str(self.HostsTableModel.getHostCheckStatusForRow(self.HostsTableModel.getRowForIp(ip))), False)
- 				menu.aboutToShow.connect(self.setVisible)
- 				menu.aboutToHide.connect(self.setInvisible)
- 				hostid = self.HostsTableModel.getHostIdForRow(self.HostsTableModel.getRowForIp(ip))
+				menu, actions = self.controller.getContextMenuForHost(str(self.HostsTableModel.getHostCheckStatusForRow(self.HostsTableModel.getRowForIp(ip))), False)
+				menu.aboutToShow.connect(self.setVisible)
+				menu.aboutToHide.connect(self.setInvisible)
+				hostid = self.HostsTableModel.getHostIdForRow(self.HostsTableModel.getRowForIp(ip))
 
- 				action = menu.exec_(self.ui.ToolHostsTableView.viewport().mapToGlobal(pos))
+				action = menu.exec_(self.ui.ToolHostsTableView.viewport().mapToGlobal(pos))
 
- 				if action:
- 					self.controller.handleHostAction(self.ip_clicked, hostid, actions, action)				
+				if action:
+					self.controller.handleHostAction(self.ip_clicked, hostid, actions, action)				
 	
 	###
 
@@ -979,7 +983,7 @@ class View(QtCore.QObject):
 			scripts.append(self.ScriptsTableModel.getScriptDBIdForRow(row))
 
 		if self.script_clicked in scripts:								# the script we previously clicked may not be visible anymore (eg: due to filters)
-	 		row = self.ScriptsTableModel.getRowForDBId(self.script_clicked)
+			row = self.ScriptsTableModel.getRowForDBId(self.script_clicked)
 
 		else:
 			row = 0														# or select the first row
@@ -1023,12 +1027,12 @@ class View(QtCore.QObject):
 			ids.append(self.ToolHostsTableModel.getProcessIdForRow(row))
 
 		if self.tool_host_clicked in ids:								# the host we previously clicked may not be visible anymore (eg: due to filters)
-	 		row = self.ToolHostsTableModel.getRowForDBId(self.tool_host_clicked)
+			row = self.ToolHostsTableModel.getRowForDBId(self.tool_host_clicked)
 
 		else:
 			row = 0														# or select the first row
 
-	 	if not row == None and self.ui.HostsTabWidget.tabText(self.ui.HostsTabWidget.currentIndex()) == 'Tools':
+		if not row == None and self.ui.HostsTabWidget.tabText(self.ui.HostsTabWidget.currentIndex()) == 'Tools':
 			self.ui.ToolHostsTableView.selectRow(row)
 			self.toolHostsClick()
 
@@ -1075,13 +1079,13 @@ class View(QtCore.QObject):
 			self.ui.DisplayWidget.show()
 			self.ui.splitter_3.setSizes([275,size-275,0])				# reset middle panel width	
 
- 	def displayAddHostsOverlay(self, display=False):
- 		if display:
- 			self.ui.addHostsOverlay.show()
- 			self.ui.HostsTableView.hide()
- 		else:
- 			self.ui.addHostsOverlay.hide()
- 			self.ui.HostsTableView.show()
+	def displayAddHostsOverlay(self, display=False):
+		if display:
+			self.ui.addHostsOverlay.show()
+			self.ui.HostsTableView.hide()
+		else:
+			self.ui.addHostsOverlay.hide()
+			self.ui.HostsTableView.show()
 			
 	#################### BOTTOM PANEL INTERFACE UPDATE FUNCTIONS ####################		
 		
@@ -1384,8 +1388,8 @@ class View(QtCore.QObject):
 		if str(bWidget.ip) in self.hostTabs:
 			hosttabs = self.hostTabs[str(bWidget.ip)]
 
- 		if hosttabs.count(bWidget) > 1:
- 			hosttabs.remove(bWidget)
+		if hosttabs.count(bWidget) > 1:
+			hosttabs.remove(bWidget)
 		
 		self.hostTabs.update({str(bWidget.ip):hosttabs})
 
