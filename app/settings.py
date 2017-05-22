@@ -155,8 +155,8 @@ class AppSettings():
 		self.actions.endGroup()
 
 		self.actions.beginGroup('SchedulerSettings')
-		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt","tcp"])
-		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt","tcp"])
+		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
+		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt,https-alt","tcp"])
 		self.actions.setValue("smbenum",["microsoft-ds","tcp"])
 #		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
 #		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
