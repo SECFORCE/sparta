@@ -17,6 +17,7 @@ from PyQt4.QtGui import *												# for filters dialog
 from app.logic import *
 from app.auxiliary import *
 from app.settings import *
+import pyperclip
 
 class Controller():
 
@@ -217,6 +218,8 @@ class Controller():
 				menu.addAction('Mark as unchecked')
 			else:
 				menu.addAction('Mark as checked')
+
+			menu.addAction('Copy to clipboard')
 			
 		return menu, actions
 
@@ -226,6 +229,9 @@ class Controller():
 			self.logic.toggleHostCheckStatus(ip)
 			self.view.updateInterface()
 			return
+
+		if action.text() == 'Copy to clipboard':
+			pyperclip.copy(ip)
 			
 		if action.text() == 'Run nmap (staged)':
 			print '[+] Purging previous portscan data for ' + str(ip)	# if we are running nmap we need to purge previous portscan results
@@ -264,6 +270,8 @@ class Controller():
 		if menu == None:												# if no menu was given, create a new one
 			menu = QMenu()
 
+		menu.addAction("Copy to clipboard")
+
 		if serviceName == '*' or serviceName in self.settings.general_web_services.split(","):
 			menu.addAction("Open in browser")
 			menu.addAction("Take screenshot")
@@ -282,6 +290,12 @@ class Controller():
 		return menu, actions, shiftPressed
 
 	def handleServiceNameAction(self, targets, actions, action, restoring=True):
+
+		if action.text() == 'Copy to clipboard':
+			ip_to_copy = ''
+			for ip in targets:
+				ip_to_copy += '%s:%s\n' % (str(ip[0]), str(ip[1]))
+			pyperclip.copy(ip_to_copy)
 
 		if action.text() == 'Take screenshot':
 			for ip in targets:
