@@ -92,7 +92,7 @@ class AppSettings():
 		self.actions.setValue("whatweb", ["Run whatweb", "whatweb [IP]:[PORT] --color=never --log-brief=\"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])		
 		
 		### SMB
-		self.actions.setValue("samrdump", ["Run samrdump", "python /usr/share/doc/python-impacket-doc/examples/samrdump.py [IP] [PORT]/SMB", "netbios-ssn,microsoft-ds"])
+		self.actions.setValue("samrdump", ["Run samrdump", "python /usr/share/doc/python-impacket/examples/samrdump.py [IP] [PORT]/SMB", "netbios-ssn,microsoft-ds"])
 		self.actions.setValue("nbtscan", ["Run nbtscan", "nbtscan -v -h [IP]", "netbios-ns"])
 		self.actions.setValue("smbenum", ["Run smbenum", "bash ./scripts/smbenum.sh [IP]", "netbios-ssn,microsoft-ds"])
 		self.actions.setValue("enum4linux", ["Run enum4linux", "enum4linux [IP]", "netbios-ssn,microsoft-ds"])
@@ -108,7 +108,7 @@ class AppSettings():
 		###
 
 		self.actions.setValue("ldapsearch", ["Run ldapsearch", "ldapsearch -h [IP] -p [PORT] -x -s base", "ldap"])		
-		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmpcheck -t [IP]", "snmp,snmptrap"])
+		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmp-check -t [IP]", "snmp,snmptrap"])    ###Change from snmpcheck to snmp-check for Kali 2.0
 		self.actions.setValue("rpcinfo", ["Run rpcinfo", "rpcinfo -p [IP]", "rpcbind"])
 		self.actions.setValue("rdp-sec-check", ["Run rdp-sec-check.pl", "perl ./scripts/rdp-sec-check.pl [IP]:[PORT]", "ms-wbt-server"])
 		self.actions.setValue("showmount", ["Show nfs shares", "showmount -e [IP]", "nfs"])
@@ -142,7 +142,7 @@ class AppSettings():
 		self.actions.setValue("telnet", ["Open with telnet", "telnet [IP] [PORT]", ""])
 		self.actions.setValue("ftp", ["Open with ftp client", "ftp [IP] [PORT]", "ftp"])
 		self.actions.setValue("mysql", ["Open with mysql client (as root)", "mysql -u root -h [IP] --port=[PORT] -p", "mysql"])
-		self.actions.setValue("mssql", ["Open with mssql client (as sa)", "python /usr/share/doc/python-impacket-doc/examples/mssqlclient.py -p [PORT] sa@[IP]", "mys-sql-s,codasrv-se"])
+		self.actions.setValue("mssql", ["Open with mssql client (as sa)", "python /usr/share/doc/python-impacket/examples/mssqlclient.py -p [PORT] sa@[IP]", "mys-sql-s,codasrv-se"])
 		self.actions.setValue("ssh", ["Open with ssh client (as root)", "ssh root@[IP] -p [PORT]", "ssh"])
 		self.actions.setValue("psql", ["Open with postgres client (as postgres)", "psql -h [IP] -p [PORT] -U postgres", "postgres"])
 		self.actions.setValue("rdesktop", ["Open with rdesktop", "rdesktop [IP]:[PORT]", "ms-wbt-server"])
@@ -155,8 +155,8 @@ class AppSettings():
 		self.actions.endGroup()
 
 		self.actions.beginGroup('SchedulerSettings')
-		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt","tcp"])
-		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt","tcp"])
+		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
+		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt,https-alt","tcp"])
 		self.actions.setValue("smbenum",["microsoft-ds","tcp"])
 #		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
 #		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
