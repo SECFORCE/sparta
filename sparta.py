@@ -15,15 +15,20 @@ Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 try:
 	from sqlalchemy.orm import scoped_session as scoped_session
 	import elixir
-except:
+except ImportError:
 	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt-get install python-elixir"
 	exit(0)
 try:	
 	from PyQt4 import QtGui, QtCore, QtWebKit
-except:
+except ImportError:
 	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt-get install python-qt4"
-	exit()
-	
+try:
+	from PySide import QtWebKit
+except ImportError:
+	print "[-] Import failed. QtWebkit library not found."
+	print "Try installing it with: apt-get install python-pyside.qtwebkit"
+	exit(0)
+
 from app.logic import *
 from ui.gui import *
 from ui.view import *

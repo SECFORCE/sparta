@@ -12,8 +12,22 @@ Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 '''
 
 import sys, os, ntpath, signal, re										# for file operations, to kill processes and for regex
-from PyQt4.QtCore import *												# for filters dialog
-from PyQt4 import QtWebKit												# to show html code (help menu)
+
+usePySide = False
+try:
+	from PyQt4.QtCore import *												# for filters dialog
+	from PyQt4 import QtWebKit												# to show html code (help menu)
+except ImportError:
+	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt-get install python-qt4"
+try:
+	from PySide.QtCore import *
+	from PySide import QtWebKit
+	usePySide = True
+except ImportError:
+	print "[-] Import failed. QtWebkit library not found."
+	print "Try installing it with: apt-get install python-pyside.qtwebkit"
+	exit(0)
+
 from ui.gui import *
 from ui.dialogs import *
 from ui.settingsdialogs import *
@@ -50,8 +64,11 @@ class View(QtCore.QObject):
 		self.settingsWidget = AddSettingsDialog(self.ui.centralwidget)
 		self.helpWidget = QtWebKit.QWebView()
 		self.helpWidget.setWindowTitle('SPARTA Help')
-		self.helpWidget.load(QUrl('./doc/help.html'))
-		
+		if usePySide:
+			self.helpWidget.load('./doc/help.html')
+		else:
+			self.helpWidget.load(QUrl('./doc/help.html'))
+
 		self.ui.HostsTableView.setSelectionMode(1)						# disable multiple selection
 		self.ui.ServiceNamesTableView.setSelectionMode(1)
 		self.ui.ToolsTableView.setSelectionMode(1)
