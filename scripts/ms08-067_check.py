@@ -51,8 +51,8 @@ from traceback import format_exc
 try:
     from impacket import smb
     from impacket import uuid
-    from impacket.dcerpc import dcerpc
-    from impacket.dcerpc import transport
+    from impacket.dcerpc.v5 import dcerpc
+    from impacket.dcerpc.v5 import transport
 except ImportError, _:
     print 'ERROR: this tool requires python-impacket library to be installed, get it '
     print 'from http://oss.coresecurity.com/projects/impacket.html or apt-get install python-impacket'

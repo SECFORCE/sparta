@@ -17,3 +17,7 @@ SPARTA 1.0.2 (BETA)
 * imported nmap XML files are now saved to tool output folder (thx mcjon3z)
 * nmap output is now also stored in HTML (thx mcjon3z)
 * added an "end time" column to the process table (thx ad0nis)
+
+SPARTA 1.0.3 (BETA)
+* fixed the QtWebKit import error (thx alexxn)
+* fixed ms08-067_check import issue (thx chris948)

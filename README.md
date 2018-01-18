@@ -1,4 +1,4 @@
-SPARTA v1.0.2 BETA (http://sparta.secforce.com)
+SPARTA v1.0.3 BETA (http://sparta.secforce.com)
 ==
 
 Authors:
@@ -24,7 +24,7 @@ It is recommended that Kali Linux is used as it already has most tools installed
 
 Kali (preferred):
 
-    apt-get install python-elixir
+    apt-get install python-elixir python-pyside.qtwebkit
 
 Ubuntu 12.04+ (untested)
 

@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2018 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -15,14 +15,25 @@ Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 try:
 	from sqlalchemy.orm import scoped_session as scoped_session
 	import elixir
-except:
-	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt-get install python-elixir"
-	exit(0)
-try:	
-	from PyQt4 import QtGui, QtCore, QtWebKit
-except:
-	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt-get install python-qt4"
-	exit()
+except ImportError, e:
+	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt install python-elixir"
+	exit(1)
+	
+try:
+	from PyQt4 import QtGui, QtCore
+except ImportError, e:
+	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt install python-qt4"
+	print e
+	exit(1)
+
+try:
+	from PyQt4 import QtWebKit
+except ImportError, e:
+	try:
+		from PySide import QtWebKit
+	except ImportError:
+		print "[-] Import failed. QtWebKit library not found. \nTry installing it with: apt install python-pyside.qtwebkit"
+		exit(1)
 	
 from app.logic import *
 from ui.gui import *

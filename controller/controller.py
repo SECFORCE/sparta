@@ -22,7 +22,7 @@ class Controller():
 
 	# initialisations that will happen once - when the program is launched
 	def __init__(self, view, logic):
-		self.version = 'SPARTA 1.0.2 (BETA)'							# update this everytime you commit!
+		self.version = 'SPARTA 1.0.3 (BETA)'							# update this everytime you commit!
 		self.logic = logic
 		self.view = view
 		self.view.setController(self)

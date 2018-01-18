@@ -12,8 +12,23 @@ Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 '''
 
 import sys, os, ntpath, signal, re										# for file operations, to kill processes and for regex
-from PyQt4.QtCore import *												# for filters dialog
-from PyQt4 import QtWebKit												# to show html code (help menu)
+
+try:
+	from PyQt4.QtCore import *												# for filters dialog
+except ImportError:
+	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt install python-qt4"
+
+try:
+	usePySide = False
+	from PyQt4 import QtWebKit
+except ImportError, e:
+	try:
+		from PySide import QtWebKit
+		usePySide = True
+	except ImportError, e:
+		print "[-] Import failed. QtWebKit library not found. \nTry installing it with: apt install python-pyside.qtwebkit"
+		exit(1)
+
 from ui.gui import *
 from ui.dialogs import *
 from ui.settingsdialogs import *
@@ -50,7 +65,16 @@ class View(QtCore.QObject):
 		self.settingsWidget = AddSettingsDialog(self.ui.centralwidget)
 		self.helpWidget = QtWebKit.QWebView()
 		self.helpWidget.setWindowTitle('SPARTA Help')
-		self.helpWidget.load(QUrl('./doc/help.html'))
+
+		# kali moves the help file so let's find it
+		url = './doc/help.html'
+		if not os.path.exists(url):
+			url = '/usr/share/doc/sparta/help.html'
+
+		if usePySide:
+			self.helpWidget.load(url)
+		else:
+			self.helpWidget.load(QUrl(url))
 		
 		self.ui.HostsTableView.setSelectionMode(1)						# disable multiple selection
 		self.ui.ServiceNamesTableView.setSelectionMode(1)
