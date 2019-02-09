@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -18,17 +18,6 @@ try:
 except ImportError:
 	print "[-] Import failed. PyQt4 library not found. \nTry installing it with: apt install python-qt4"
 
-try:
-	usePySide = False
-	from PyQt4 import QtWebKit
-except ImportError, e:
-	try:
-		from PySide import QtWebKit
-		usePySide = True
-	except ImportError, e:
-		print "[-] Import failed. QtWebKit library not found. \nTry installing it with: apt install python-pyside.qtwebkit"
-		exit(1)
-
 from ui.gui import *
 from ui.dialogs import *
 from ui.settingsdialogs import *
@@ -38,6 +27,7 @@ from app.scriptmodels import *
 from app.processmodels import *
 from app.auxiliary import *
 import time #temp
+import webbrowser   # to open help page in browser
 
 # this class handles everything gui-related
 class View(QtCore.QObject):
@@ -63,19 +53,12 @@ class View(QtCore.QObject):
 		self.importProgressWidget = ProgressWidget('Importing nmap..', self.ui.centralwidget)
 		self.adddialog = AddHostsDialog(self.ui.centralwidget)		
 		self.settingsWidget = AddSettingsDialog(self.ui.centralwidget)
-		self.helpWidget = QtWebKit.QWebView()
-		self.helpWidget.setWindowTitle('SPARTA Help')
 
 		# kali moves the help file so let's find it
-		url = './doc/help.html'
-		if not os.path.exists(url):
-			url = '/usr/share/doc/sparta/help.html'
+		self.helpurl = './doc/help.html'
+		if not os.path.exists(self.helpurl):
+			self.helpurl = '/usr/share/doc/sparta/help.html'
 
-		if usePySide:
-			self.helpWidget.load(url)
-		else:
-			self.helpWidget.load(QUrl(url))
-		
 		self.ui.HostsTableView.setSelectionMode(1)						# disable multiple selection
 		self.ui.ServiceNamesTableView.setSelectionMode(1)
 		self.ui.ToolsTableView.setSelectionMode(1)
@@ -450,7 +433,10 @@ class View(QtCore.QObject):
 		self.controller.cancelSettings()
 		
 	def connectHelp(self):
-		self.ui.menuHelp.triggered.connect(self.helpWidget.show)
+		self.ui.menuHelp.triggered.connect(self.showHelp)
+
+        def showHelp(self):
+                webbrowser.open(self.helpurl)
 
 	###
 	

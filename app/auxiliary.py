@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -11,10 +11,10 @@ Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
     You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os, sys, urllib2, socket, time, datetime, locale, webbrowser, re	# for webrequests, screenshot timeouts, timestamps, browser stuff and regex
+import os, sys, urllib2, socket, time, datetime, locale, webbrowser, re, requests	# for webrequests, screenshot timeouts, timestamps, browser stuff and regex
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import *												# for QProcess
-import errno															# temporary for isHttpd
+#import errno															# temporary for isHttpd
 import subprocess														# for screenshots with cutycapt
 import string															# for input validation
 
@@ -39,46 +39,26 @@ def IP2Int(ip):
 	res = (16777216 * o[0]) + (65536 * o[1]) + (256 * o[2]) + o[3]
 	return res
 
-# old function, replaced by isHttps (checking for https first is better)
-def isHttp(url):
-	try:
-		req = urllib2.Request(url)
-		req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:22.0) Gecko/20100101 Firefox/22.0 Iceweasel/22.0')
-		r = urllib2.urlopen(req, timeout=10)
-		#print 'response code: ' + str(r.code)
-		#print 'response content: ' + str(r.read())
-		return True
-		
-	except urllib2.HTTPError, e:
-		reason = str(sys.exc_info()[1].reason)
-		# print reason
-		if reason == 'Unauthorized' or reason == 'Forbidden':
-			return True
-		return False
-		
-	except:
-		return False
-
+# checks if a web port is SSL enabled
 def isHttps(ip, port):
+	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:22.0) Gecko/20100101 Firefox/22.0 Iceweasel/22.0'}
 	try:
-		req = urllib2.Request('https://'+ip+':'+port)
-		req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:22.0) Gecko/20100101 Firefox/22.0 Iceweasel/22.0')
-		r = urllib2.urlopen(req, timeout=5)
-#		print '\nresponse code: ' + str(r.code)
-#		print '\nresponse content: ' + str(r.read())
+		r = requests.get("https://"+ip+":"+port, headers=headers, verify=False, timeout=5)
 		return True
 
-	except:	
-		reason = str(sys.exc_info()[1].reason)
-#		print reason
-#		if 'Interrupted system call' in reason:
-#			print 'caught exception. retry?'
-			
-		if reason == 'Forbidden':
-			return True	
+	except requests.exceptions.SSLError as e:
 		return False
 
-		
+        except requests.exceptions.ConnectionError as e:
+                return False
+
+	except requests.exceptions.ReadTimeout as e:
+		return False
+	
+	except Exception as e:
+            print e
+            return True
+	
 def getTimestamp(human=False):
 	t = time.time()
 	if human:
@@ -277,8 +257,9 @@ class Screenshooter(QtCore.QThread):
 				else:
 					self.save("http://"+url, ip, port, outputfile)
 
-			except:
+			except Exception as e:
 				print '\t[-] Unable to take the screenshot. Moving on..'
+                                print e
 				continue				
 				
 		self.processing = False
