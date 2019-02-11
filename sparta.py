@@ -70,24 +70,11 @@ class MyEventFilter(QObject):
 
 if __name__ == "__main__":
 
-#        target = False
-#        nmap = False
-
         # Parse arguments and kick off scans if needed
         parser = argparse.ArgumentParser()
         parser.add_argument("-t", "--target", help="Automatically launch a staged nmap against the target IP range")
         parser.add_argument("-f", "--file", help="Import nmap XML file and kick off automated attacks")
         args = parser.parse_args()
-#        if args.t:
-#                print "[+] Target was specified."
-#                target = True
-#                controller.addHosts(args.t, True, True)
-
-#        if args.i:
-#                print "[+] Nmap XML file was provided."
-#                nmap = True
- #               controller.importNmap(args.i)
-
     
         app = QtGui.QApplication(sys.argv)
 	myFilter = MyEventFilter()						# to capture events
@@ -112,11 +99,6 @@ if __name__ == "__main__":
 
 	MainWindow.show()
 
-	# Parse arguments and kick off scans if needed
-#	parser = argparse.ArgumentParser()
-#	parser.add_argument("-t", help="Automatically launch a staged nmap against the target IP range")
-#	parser.add_argument("-i", help="Import nmap XML file and kick off automated attacks")
-#	args = parser.parse_args()
 	if args.target:
 		print "[+] Target was specified."
 		controller.addHosts(args.target, True, True)
