@@ -26,6 +26,7 @@ except ImportError, e:
 	print e
 	exit(1)
 
+import argparse
 from app.logic import *
 from ui.gui import *
 from ui.view import *
@@ -69,7 +70,26 @@ class MyEventFilter(QObject):
 
 if __name__ == "__main__":
 
-	app = QtGui.QApplication(sys.argv)
+#        target = False
+#        nmap = False
+
+        # Parse arguments and kick off scans if needed
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-t", "--target", help="Automatically launch a staged nmap against the target IP range")
+        parser.add_argument("-f", "--file", help="Import nmap XML file and kick off automated attacks")
+        args = parser.parse_args()
+#        if args.t:
+#                print "[+] Target was specified."
+#                target = True
+#                controller.addHosts(args.t, True, True)
+
+#        if args.i:
+#                print "[+] Nmap XML file was provided."
+#                nmap = True
+ #               controller.importNmap(args.i)
+
+    
+        app = QtGui.QApplication(sys.argv)
 	myFilter = MyEventFilter()						# to capture events
 	app.installEventFilter(myFilter)
 	app.setWindowIcon(QIcon('./images/icons/logo.png'))
@@ -91,4 +111,18 @@ if __name__ == "__main__":
 	controller = Controller(view, logic)			# Controller prep (communication between model and view)
 
 	MainWindow.show()
-	sys.exit(app.exec_())
+
+	# Parse arguments and kick off scans if needed
+#	parser = argparse.ArgumentParser()
+#	parser.add_argument("-t", help="Automatically launch a staged nmap against the target IP range")
+#	parser.add_argument("-i", help="Import nmap XML file and kick off automated attacks")
+#	args = parser.parse_args()
+	if args.target:
+		print "[+] Target was specified."
+		controller.addHosts(args.target, True, True)
+
+	if args.file:
+		print "[+] Nmap XML file was provided."
+		controller.importNmap(args.file)        
+	
+        sys.exit(app.exec_())

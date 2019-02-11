@@ -193,6 +193,15 @@ class Controller():
 			command = "nmap -n -sL "+iprange+" -oA "+outputfile
 			self.runCommand('nmap', 'nmap (list)', iprange, '','', command, getTimestamp(True), outputfile, self.view.createNewTabForHost(str(iprange), 'nmap (list)', True))
 
+	def importNmap(self, filename):
+		if not os.access(filename, os.R_OK):						# check for read permissions on the xml file
+			raise OSError('[-] Insufficient permissions to read this file.')
+			return
+
+		self.nmapImporter.setFilename(str(filename))
+		self.nmapImporter.start()
+		self.copyNmapXMLToOutputFolder(str(filename))
+
 	#################### CONTEXT MENUS ####################
 
 	def getContextMenuForHost(self, isChecked, showAll=True):			# showAll exists because in some cases we only want to show host tools excluding portscans and 'mark as checked'

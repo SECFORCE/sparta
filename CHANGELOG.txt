@@ -26,3 +26,7 @@ SPARTA 1.0.4 (BETA)
 * removed QtWebKit dependency for displaying the help menu
 * improved HTTPS/HTTP detection (experimental)
 * removed MS08-067 check from smbenum.sh
+
+DEV
+* implemented two command line options (--target and --file)
+
