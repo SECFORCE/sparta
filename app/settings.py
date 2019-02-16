@@ -70,7 +70,7 @@ class AppSettings():
 		self.actions.beginGroup('ToolSettings')
 		self.actions.setValue('nmap-path','/usr/bin/nmap')
 		self.actions.setValue('hydra-path','/usr/bin/hydra')
-		self.actions.setValue('cutycapt-path','/usr/bin/cutycapt')
+#		self.actions.setValue('cutycapt-path','/usr/bin/cutycapt')
 		self.actions.setValue('texteditor-path','/usr/bin/leafpad')
 		self.actions.endGroup()
 
@@ -360,7 +360,7 @@ class Settings():
 
 		self.tools_path_nmap = "/usr/bin/nmap"
 		self.tools_path_hydra = "/usr/bin/hydra"
-		self.tools_path_cutycapt = "/usr/bin/cutycapt"
+#		self.tools_path_cutycapt = "/usr/bin/cutycapt"
 		self.tools_path_texteditor = "/usr/bin/leafpad"
 
 		self.hostActions = []
@@ -410,7 +410,7 @@ class Settings():
 
 				self.tools_path_nmap = self.toolSettings['nmap-path']
 				self.tools_path_hydra = self.toolSettings['hydra-path']
-				self.tools_path_cutycapt = self.toolSettings['cutycapt-path']
+#				self.tools_path_cutycapt = self.toolSettings['cutycapt-path']
 				self.tools_path_texteditor = self.toolSettings['texteditor-path']
 				
 			except KeyError:

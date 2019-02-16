@@ -215,7 +215,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		# POPULATE TOOL PATHS TAB
 		self.nmapPathInput.setText(self.settings.tools_path_nmap)
 		self.hydraPathInput.setText(self.settings.tools_path_hydra)
-		self.cutycaptPathInput.setText(self.settings.tools_path_cutycapt)
+#		self.cutycaptPathInput.setText(self.settings.tools_path_cutycapt)
 		self.textEditorPathInput.setText(self.settings.tools_path_texteditor)
  
 		# POPULATE STAGED NMAP TAB
@@ -537,7 +537,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 	def toolPathsValidate(self):				
 		validationPassed = self.validateFile(self.nmapPathInput)
 		validationPassed = self.validateFile(self.hydraPathInput) and validationPassed
-		validationPassed = self.validateFile(self.cutycaptPathInput) and validationPassed
+#		validationPassed = self.validateFile(self.cutycaptPathInput) and validationPassed
 		validationPassed = self.validateFile(self.textEditorPathInput) and validationPassed
 		return validationPassed
 
@@ -1070,14 +1070,14 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.hydraPathHorLayout.addWidget(self.hydraPathInput)
 		self.hydraPathHorLayout.addStretch()
 		
-		self.cutycaptPathlabel = QtGui.QLabel()
-		self.cutycaptPathlabel.setText('Cutycapt')
-		self.cutycaptPathlabel.setFixedWidth(100)
-		self.cutycaptPathInput = QtGui.QLineEdit()
-		self.cutycaptPathHorLayout = QtGui.QHBoxLayout()
-		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathlabel)
-		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathInput)
-		self.cutycaptPathHorLayout.addStretch()
+#		self.cutycaptPathlabel = QtGui.QLabel()
+#		self.cutycaptPathlabel.setText('Cutycapt')
+#		self.cutycaptPathlabel.setFixedWidth(100)
+#		self.cutycaptPathInput = QtGui.QLineEdit()
+#		self.cutycaptPathHorLayout = QtGui.QHBoxLayout()
+#		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathlabel)
+#		self.cutycaptPathHorLayout.addWidget(self.cutycaptPathInput)
+#		self.cutycaptPathHorLayout.addStretch()
 		
 		self.textEditorPathlabel = QtGui.QLabel()
 		self.textEditorPathlabel.setText('Text editor')
@@ -1091,7 +1091,7 @@ class AddSettingsDialog(QtGui.QDialog):									# dialog shown when the user sel
 		self.toolsPathVerLayout = QtGui.QVBoxLayout()		
 		self.toolsPathVerLayout.addLayout(self.nmapPathHorLayout)
 		self.toolsPathVerLayout.addLayout(self.hydraPathHorLayout)
-		self.toolsPathVerLayout.addLayout(self.cutycaptPathHorLayout)
+#		self.toolsPathVerLayout.addLayout(self.cutycaptPathHorLayout)
 		self.toolsPathVerLayout.addLayout(self.textEditorPathHorLayout)
 		self.toolsPathVerLayout.addStretch()
 

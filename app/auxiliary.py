@@ -15,7 +15,7 @@ import os, sys, urllib2, socket, time, datetime, locale, webbrowser, re, request
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import *												# for QProcess
 #import errno															# temporary for isHttpd
-import subprocess														# for screenshots with cutycapt
+import subprocess														# for screenshots
 import string															# for input validation
 
 # bubble sort algorithm that sorts an array (in place) based on the values in another array
