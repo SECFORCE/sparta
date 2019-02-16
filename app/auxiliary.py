@@ -246,7 +246,7 @@ class Screenshooter(QtCore.QThread):
 		for i in range(0, len(self.urls)):
 			try:
 				url = self.urls.pop(0)
-				outputfile = getTimestamp()+'-screenshot-'+url.replace(':', '-')+'.png'
+				outputfile = getTimestamp()+'-screenshot-'+url.replace(':', '-')+'.jpg'
 				ip = url.split(':')[0]
 				port = url.split(':')[1]
 #				print '[+] Taking screenshot of '+url
@@ -270,12 +270,20 @@ class Screenshooter(QtCore.QThread):
 		print '\t[+] Finished.'
 
 	def save(self, url, ip, port, outputfile):
-		print '[+] Saving screenshot as: '+str(outputfile)
-		command = "cutycapt --max-wait="+str(self.timeout)+" --url="+str(url)+"/ --out=\""+str(self.outputfolder)+"/"+str(outputfile)+"\""
-#		print command
+		print '[+] Taking screenshot for ' + str(url)
+                out = str(self.outputfolder) + "/" + str(outputfile)
+                command = "wkhtmltoimage --load-error-handling ignore " + str(url) + " " + out
 		p = subprocess.Popen(command, shell=True)
-		p.wait()														# wait for command to finish
-		self.done.emit(ip,port,outputfile)								# send a signal to add the 'process' to the DB
+		p.wait()
+
+                if os.path.exists(out) and os.stat(out).st_size > 0:
+		    print '[+] Saved screenshot as: '+str(outputfile)
+                    self.done.emit(ip,port,outputfile)
+
+                else:
+                    raise Exception("Screenshot is empty file.")
+
+
 
 # This class handles what is to be shown in each panel
 class Filters():

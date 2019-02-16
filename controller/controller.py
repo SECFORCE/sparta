@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -22,7 +22,7 @@ class Controller():
 
 	# initialisations that will happen once - when the program is launched
 	def __init__(self, view, logic):
-		self.version = 'SPARTA 1.0.4 (BETA)'							# update this everytime you commit!
+		self.version = 'SPARTA 1.0.5 (BETA)'							# update this everytime you commit!
 		self.logic = logic
 		self.view = view
 		self.view.setController(self)
