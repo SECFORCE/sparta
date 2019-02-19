@@ -21,3 +21,8 @@ SPARTA 1.0.2 (BETA)
 SPARTA 1.0.3 (BETA)
 * fixed the QtWebKit import error (thx alexxn)
 * fixed ms08-067_check import issue (thx chris948)
+
+SPARTA 1.0.4 (BETA)
+* removed QtWebKit dependency for displaying the help menu
+* improved HTTPS/HTTP detection (experimental)
+* removed MS08-067 check from smbenum.sh

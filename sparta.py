@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2018 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -26,15 +26,6 @@ except ImportError, e:
 	print e
 	exit(1)
 
-try:
-	from PyQt4 import QtWebKit
-except ImportError, e:
-	try:
-		from PySide import QtWebKit
-	except ImportError:
-		print "[-] Import failed. QtWebKit library not found. \nTry installing it with: apt install python-pyside.qtwebkit"
-		exit(1)
-	
 from app.logic import *
 from ui.gui import *
 from ui.view import *
