@@ -308,6 +308,27 @@ class Controller():
 					command = str(self.settings.portActions[srvc_num][2])
 					command = command.replace('[IP]', ip[0]).replace('[PORT]', ip[1]).replace('[OUTPUT]', outputfile)
 					
+					if '[INPUT_USERNAME]' in command:
+						username, ok = QtGui.QInputDialog.getText(self.view.ui.centralwidget, 'Username', 'Enter username (or leave blank for null)')
+						if ok:
+							command = command.replace('[INPUT_USERNAME]', username)
+						else:
+							return
+							
+					if '[INPUT_PASSWORD]' in command:
+						password, ok = QInputDialog.getText(self.view.ui.centralwidget, 'Password', 'Enter password (or leave blank for null)')
+						if ok:
+							command = command.replace('[INPUT_PASSWORD]', password)
+						else:
+							return
+							
+					if '[INPUT_DOMAIN]' in command:
+						domain, ok = QInputDialog.getText(self.view.ui.centralwidget, 'Domain', 'Enter domain (or leave blank for null)')
+						if ok:
+							command = command.replace('[INPUT_DOMAIN]', domain)
+						else:
+							return
+					
 					if 'nmap' in command and ip[2] == 'udp':
 						command=command.replace("-sV","-sVU")
 
