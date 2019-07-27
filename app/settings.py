@@ -108,7 +108,7 @@ class AppSettings():
 		###
 
 		self.actions.setValue("ldapsearch", ["Run ldapsearch", "ldapsearch -h [IP] -p [PORT] -x -s base", "ldap"])		
-		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmp-check -t [IP]", "snmp,snmptrap"])    ###Change from snmpcheck to snmp-check for Kali 2.0
+		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmp-check [IP]", "snmp,snmptrap"])    ###Change from snmpcheck to snmp-check for Kali 2.0
 		self.actions.setValue("rpcinfo", ["Run rpcinfo", "rpcinfo -p [IP]", "rpcbind"])
 		self.actions.setValue("rdp-sec-check", ["Run rdp-sec-check.pl", "perl ./scripts/rdp-sec-check.pl [IP]:[PORT]", "ms-wbt-server"])
 		self.actions.setValue("showmount", ["Show nfs shares", "showmount -e [IP]", "nfs"])
