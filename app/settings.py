@@ -86,7 +86,25 @@ class AppSettings():
 		self.actions.beginGroup('PortActions')
 		self.actions.setValue("banner", ["Grab banner", "bash -c \"echo \"\" | nc -v -n -w1 [IP] [PORT]\"", ""])
 		self.actions.setValue("nmap", ["Run nmap (scripts) on port", "nmap -Pn -sV -sC -vvvvv -p[PORT] [IP] -oA [OUTPUT]", ""])
-		self.actions.setValue("nikto", ["Run nikto", "nikto -o \"[OUTPUT].txt\" -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])		
+		self.actions.setValue("nikto", ["Run nikto", "nikto -o \"[OUTPUT].txt\" -p [PORT] -h [IP]", "http,https,ssl,soap,http-proxy,http-alt"])
+
+		# -------------------------------------------
+		# Custom Implemented Scripts
+
+		self.actions.setValue("dirb", ["Run dirb http (quick)", "dirb http://[IP]:[PORT] /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -f -S -o \"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])
+
+		self.actions.setValue("dirbs", ["Run dirb https (quick)", "dirb https://[IP]:[PORT] /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -f -S -o \"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])
+
+		self.actions.setValue("dirbe", ["Run dirb http (exhaustive)", "dirb http://[IP]:[PORT] /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -X .conf,.html,.inc,.ini,.json,.log,.php,.py,.sql,.tar,.txt,.zip -f -S -o \"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])
+
+		self.actions.setValue("dirbes", ["Run dirb https (exhaustive)", "dirb https://[IP]:[PORT] /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -X .conf,.html,.inc,.ini,.json,.log,.php,.py,.sql,.tar,.txt,.zip -f -S -o \"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])
+
+		self.actions.setValue("gobuster", ["Run gobuster (exhaustive)", "gobuster dir -w /usr/share/wordlists/seclists/Discovery/Web-Content/big.txt -k -l -e -b 404 -x .conf,.html,.inc,.ini,.json,.log,.php,.py,.sql,.tar,.txt,.zip --threads 1 --timeout 10s -u http://[IP]:[PORT] --wildcard -z -o \"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])
+
+
+		# -------------------------------------------
+
+
 		self.actions.setValue("dirbuster", ["Launch dirbuster", "java -Xmx256M -jar /usr/share/dirbuster/DirBuster-1.0-RC1.jar -u http://[IP]:[PORT]/", "http,https,ssl,soap,http-proxy,http-alt"])
 		self.actions.setValue("webslayer", ["Launch webslayer", "webslayer", "http,https,ssl,soap,http-proxy,http-alt"])
 		self.actions.setValue("whatweb", ["Run whatweb", "whatweb [IP]:[PORT] --color=never --log-brief=\"[OUTPUT].txt\"", "http,https,ssl,soap,http-proxy,http-alt"])		
@@ -156,11 +174,17 @@ class AppSettings():
 
 		self.actions.beginGroup('SchedulerSettings')
 		self.actions.setValue("nikto",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
+
+		# ---------------------------------
+		# Custom Scheduled Scripts
+		self.actions.setValue("dirb",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
+		# ---------------------------------
+
 		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt,https-alt","tcp"])
 		self.actions.setValue("smbenum",["microsoft-ds","tcp"])
-#		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
-#		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
-#		self.actions.setValue("nbtscan","netbios-ns")
+		self.actions.setValue("enum4linux","netbios-ssn,microsoft-ds")
+		self.actions.setValue("smb-null-sessions","netbios-ssn,microsoft-ds")
+		self.actions.setValue("nbtscan","netbios-ns")
 		self.actions.setValue("snmpcheck",["snmp","udp"])
 		self.actions.setValue("x11screen",["X11","tcp"])
 		self.actions.setValue("snmp-default",["snmp","udp"])
@@ -430,3 +454,4 @@ if __name__ == "__main__":
 	print s == s2
 	s2.general_default_terminal = 'whatever'
 	print s == s2
+
