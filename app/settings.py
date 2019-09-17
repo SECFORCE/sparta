@@ -178,6 +178,7 @@ class AppSettings():
 		# ---------------------------------
 		# Custom Scheduled Scripts
 		self.actions.setValue("dirb",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
+		self.actions.setValue("showmount",["nfs","tcp"])
 		# ---------------------------------
 
 		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt,https-alt","tcp"])
