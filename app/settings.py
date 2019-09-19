@@ -129,7 +129,7 @@ class AppSettings():
 		self.actions.setValue("snmpcheck", ["Run snmpcheck", "snmp-check -t [IP]", "snmp,snmptrap"])    ###Change from snmpcheck to snmp-check for Kali 2.0
 		self.actions.setValue("rpcinfo", ["Run rpcinfo", "rpcinfo -p [IP]", "rpcbind"])
 		self.actions.setValue("rdp-sec-check", ["Run rdp-sec-check.pl", "perl ./scripts/rdp-sec-check.pl [IP]:[PORT]", "ms-wbt-server"])
-		self.actions.setValue("showmount", ["Show nfs shares", "showmount -e [IP]", "nfs"])
+		self.actions.setValue("showmount", ["Show nfs shares", "showmount -e [IP]", "nfs,nfs_acl"])
 		self.actions.setValue("x11screen", ["Run x11screenshot", "bash ./scripts/x11screenshot.sh [IP]", "X11"])
 		self.actions.setValue("sslscan", ["Run sslscan", "sslscan --no-failed [IP]:[PORT]", "https,ssl"])
 		self.actions.setValue("sslyze", ["Run sslyze", "sslyze --regular [IP]:[PORT]", "https,ssl,ms-wbt-server,imap,pop3,smtp"])
@@ -178,7 +178,7 @@ class AppSettings():
 		# ---------------------------------
 		# Custom Scheduled Scripts
 		self.actions.setValue("dirb",["http,https,ssl,soap,http-proxy,http-alt,https-alt","tcp"])
-		self.actions.setValue("showmount",["nfs","tcp"])
+		self.actions.setValue("showmount",["nfs,nfs_acl","tcp"])
 		# ---------------------------------
 
 		self.actions.setValue("screenshooter",["http,https,ssl,http-proxy,http-alt,https-alt","tcp"])
