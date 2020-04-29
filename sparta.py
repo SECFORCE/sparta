@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2020 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -12,12 +12,12 @@ Copyright (c) 2019 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 '''
 
 # check for dependencies first (make sure all non-standard dependencies are checked for here)
-try:
-	from sqlalchemy.orm import scoped_session as scoped_session
-	import elixir
-except ImportError, e:
-	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt install python-elixir"
-	exit(1)
+#try:
+#	from sqlalchemy.orm import scoped_session as scoped_session
+#	import elixir
+#except ImportError, e:
+#	print "[-] Import failed. Elixir library not found. \nTry installing it with: apt install python-elixir"
+#	exit(1)
 	
 try:
 	from PyQt4 import QtGui, QtCore

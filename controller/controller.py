@@ -461,19 +461,18 @@ class Controller():
 #		print '# MAX PROCESSES: ' + str(self.settings.general_max_fast_processes)
 #		print '# fast processes running: ' + str(self.fastProcessesRunning)
 #		print '# fast processes queued: ' + str(self.fastProcessQueue.qsize())
-		
+#		print "[+] Checking process queue.."
 		if not self.fastProcessQueue.empty():
 			if (self.fastProcessesRunning < int(self.settings.general_max_fast_processes)):
 				next_proc = self.fastProcessQueue.get()
+				#print str(next_proc.command)
 				if not self.logic.isCanceledProcess(str(next_proc.id)):
-					#print '[+] Running: '+ str(next_proc.command)
 					next_proc.display.clear()
 					self.processes.append(next_proc)
 					self.fastProcessesRunning += 1
 					next_proc.start(next_proc.command)
 					self.logic.storeProcessRunningStatusInDB(next_proc.id, next_proc.pid())
 				elif not self.fastProcessQueue.empty():
-#					print '> next process was canceled, checking queue again..'
 					self.checkProcessQueue()
 #			else:
 #				print '> cannot run processes in the queue'
@@ -505,10 +504,10 @@ class Controller():
 	# this function creates a new process, runs the command and takes care of displaying the ouput. returns the PID
 	# the last 3 parameters are only used when the command is a staged nmap
 	def runCommand(self, name, tabtitle, hostip, port, protocol, command, starttime, outputfile, textbox, discovery=True, stage=0, stop=False):
+		#print "[+] Running: " + command
 		self.logic.createFolderForTool(name)							# create folder for tool if necessary
 		qProcess = MyQProcess(name, tabtitle, hostip, port, protocol, command, starttime, outputfile, textbox)
 		textbox.setProperty('dbId', QVariant(str(self.logic.addProcessToDB(qProcess)))) # database id for the process is stored so that we can retrieve the widget later (in the tools tab)
-		#print '[+] Queuing: ' + str(command)
 		self.fastProcessQueue.put(qProcess)
 		qProcess.display.appendPlainText('The process is queued and will start as soon as possible.')
 		qProcess.display.appendPlainText('If you want to increase the number of simultaneous processes, change this setting in the configuration file.')
@@ -532,6 +531,7 @@ class Controller():
 
 	# recursive function used to run nmap in different stages for quick results
 	def runStagedNmap(self, iprange, discovery=True, stage=1, stop=False):
+		print "[+] Running staged nmap."
 		if not stop:
 			textbox = self.view.createNewTabForHost(str(iprange), 'nmap (stage '+str(stage)+')', True)
 			outputfile = self.logic.runningfolder+"/nmap/"+getTimestamp()+'-nmapstage'+str(stage)		

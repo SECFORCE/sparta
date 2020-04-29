@@ -2,7 +2,7 @@
 
 '''
 SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
-Copyright (c) 2015 SECFORCE (Antonio Quina and Leonidas Stavliotis)
+Copyright (c) 2020 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -15,7 +15,8 @@ import os, tempfile, ntpath, shutil										# for creation of temp files and fi
 import logging		# test
 import subprocess	# for CWD
 from parsers.Parser import *
-from db.database import *
+from db.database import Database
+from db.tables import *
 from app.auxiliary import *
 
 class Logic():
@@ -179,14 +180,14 @@ class Logic():
 			return False
 
 	def isHostInDB(self, host):											# used we don't run tools on hosts out of scope
-		tmp_query = 'SELECT host.ip FROM db_tables_nmap_host AS host WHERE host.ip == ? OR host.hostname == ?'
-		result = metadata.bind.execute(tmp_query, str(host), str(host)).fetchall()
+		tmp_query = 'SELECT host.ip FROM nmap_host AS host WHERE host.ip == ? OR host.hostname == ?'
+		result = self.db.metadata.bind.execute(tmp_query, str(host), str(host)).fetchall()
 		if result:
 			return True
 		return False
 
 	def getHostsFromDB(self, filters):
-		tmp_query = 'SELECT * FROM db_tables_nmap_host AS hosts WHERE 1=1'
+		tmp_query = 'SELECT * FROM nmap_host AS hosts WHERE 1=1'
 
 		if filters.down == False:
 			tmp_query += ' AND hosts.status!=\'down\''
@@ -197,13 +198,13 @@ class Logic():
 		for word in filters.keywords:
 			tmp_query += ' AND (hosts.ip LIKE \'%'+sanitise(word)+'%\' OR hosts.os_match LIKE \'%'+sanitise(word)+'%\' OR hosts.hostname LIKE \'%'+sanitise(word)+'%\')'
 
-		return metadata.bind.execute(tmp_query).fetchall()
+		return self.db.metadata.bind.execute(tmp_query).fetchall()
 
 	# get distinct service names from DB
 	def getServiceNamesFromDB(self, filters):
-		tmp_query = ('SELECT DISTINCT service.name FROM db_tables_nmap_service as service ' +
-					'INNER JOIN db_tables_nmap_port as ports ' +
-					'INNER JOIN db_tables_nmap_host AS hosts ' + 
+		tmp_query = ('SELECT DISTINCT service.name FROM nmap_service as service ' +
+					'INNER JOIN nmap_port as ports ' +
+					'INNER JOIN nmap_host AS hosts ' + 
 					'ON hosts.id = ports.host_id AND service.id=ports.service_id WHERE 1=1')
 					
 		if filters.down == False:
@@ -227,30 +228,30 @@ class Logic():
 					
 		tmp_query += ' ORDER BY service.name ASC'
 							
-		return metadata.bind.execute(tmp_query).fetchall()
+		return self.db.metadata.bind.execute(tmp_query).fetchall()
 
 	# get notes for given host IP
-	def getNoteFromDB(self, hostId):
-		return note.query.filter_by(host_id=str(hostId)).first()
+	def getNoteFromDB(self, host_id):
+		return self.db.session().query(note).filter_by(host_id=str(host_id)).first()
 
 	# get script info for given host IP
 	def getScriptsFromDB(self, hostIP):
-		tmp_query = ('SELECT host.id,host.script_id,port.port_id,port.protocol FROM db_tables_nmap_script AS host ' +
-					'INNER JOIN db_tables_nmap_host AS hosts ON hosts.id = host.host_id ' +
-					'LEFT OUTER JOIN db_tables_nmap_port AS port ON port.id=host.port_id ' +
+		tmp_query = ('SELECT host.id,host.script_id,port.port_id,port.protocol FROM nmap_script AS host ' +
+					'INNER JOIN nmap_host AS hosts ON hosts.id = host.host_id ' +
+					'LEFT OUTER JOIN nmap_port AS port ON port.id=host.port_id ' +
 					'WHERE hosts.ip=?')
 
-		return metadata.bind.execute(tmp_query, str(hostIP)).fetchall()
+		return self.db.metadata.bind.execute(tmp_query, str(hostIP)).fetchall()
 		
 	def getScriptOutputFromDB(self, scriptDBId):
-		tmp_query = ('SELECT script.output FROM db_tables_nmap_script as script WHERE script.id=?')
-		return metadata.bind.execute(tmp_query, str(scriptDBId)).fetchall()
+		tmp_query = ('SELECT script.output FROM nmap_script as script WHERE script.id=?')
+		return self.db.metadata.bind.execute(tmp_query, str(scriptDBId)).fetchall()
 
 	# get port and service info for given host IP
 	def getPortsAndServicesForHostFromDB(self, hostIP, filters):
-		tmp_query = ('SELECT hosts.ip,ports.port_id,ports.protocol,ports.state,ports.host_id,ports.service_id,services.name,services.product,services.version,services.extrainfo,services.fingerprint FROM db_tables_nmap_port AS ports ' +
-			'INNER JOIN db_tables_nmap_host AS hosts ON hosts.id = ports.host_id ' +
-			'LEFT OUTER JOIN db_tables_nmap_service AS services ON services.id=ports.service_id ' +
+		tmp_query = ('SELECT hosts.ip,ports.port_id,ports.protocol,ports.state,ports.host_id,ports.service_id,services.name,services.product,services.version,services.extrainfo,services.fingerprint FROM nmap_port AS ports ' +
+			'INNER JOIN nmap_host AS hosts ON hosts.id = ports.host_id ' +
+			'LEFT OUTER JOIN nmap_service AS services ON services.id=ports.service_id ' +
 			'WHERE hosts.ip=?')
 		
 		if filters.portopen == False:
@@ -264,51 +265,51 @@ class Logic():
 		if filters.udp == False:
 			tmp_query += ' AND ports.protocol!=\'udp\''
 
-		return metadata.bind.execute(tmp_query, str(hostIP)).fetchall()
+		return self.db.metadata.bind.execute(tmp_query, str(hostIP)).fetchall()
 
 	# used to check if there are any ports of a specific protocol for a given host
 	def getPortsForHostFromDB(self, hostIP, protocol):
-		tmp_query = ('SELECT ports.port_id FROM db_tables_nmap_port AS ports ' +
-			'INNER JOIN db_tables_nmap_host AS hosts ON hosts.id = ports.host_id ' +
+		tmp_query = ('SELECT ports.port_id FROM nmap_port AS ports ' +
+			'INNER JOIN nmap_host AS hosts ON hosts.id = ports.host_id ' +
 			'WHERE hosts.ip=? and ports.protocol=?')
 			
-		return metadata.bind.execute(tmp_query, str(hostIP), str(protocol)).first()
+		return self.db.metadata.bind.execute(tmp_query, str(hostIP), str(protocol)).first()
 
 	# used to get the service name given a host ip and a port when we are in tools tab (left) and right click on a host
 	def getServiceNameForHostAndPort(self, hostIP, port):
-		tmp_query = ('SELECT services.name FROM db_tables_nmap_service AS services ' +
-			'INNER JOIN db_tables_nmap_host AS hosts ON hosts.id = ports.host_id ' +
-			'INNER JOIN db_tables_nmap_port AS ports ON services.id=ports.service_id ' +
+		tmp_query = ('SELECT services.name FROM nmap_service AS services ' +
+			'INNER JOIN nmap_host AS hosts ON hosts.id = ports.host_id ' +
+			'INNER JOIN nmap_port AS ports ON services.id=ports.service_id ' +
 			'WHERE hosts.ip=? and ports.port_id=?')
 			
-		return metadata.bind.execute(tmp_query, str(hostIP), str(port)).first()
+		return self.db.metadata.bind.execute(tmp_query, str(hostIP), str(port)).first()
 	
 	# used to delete all port/script data related to a host - to overwrite portscan info with the latest scan	
 	def deleteAllPortsAndScriptsForHostFromDB(self, hostID, protocol):
-		ports_for_host = nmap_port.query.filter(nmap_port.host_id == hostID, nmap_port.protocol == str(protocol)).all()
+		ports_for_host = self.db.session().quer(nmap_port).filter(nmap_port.host_id == hostID, nmap_port.protocol == str(protocol)).all()
 				
 		for p in ports_for_host:
-			scripts_for_ports = nmap_script.query.filter(nmap_script.port_id == p.id).all()
+			scripts_for_ports = self.db.session().query(nmap_script).filter(nmap_script.port_id == p.id).all()
 			for s in scripts_for_ports:
-				s.delete()				
+				self.db.session().delete(s)
 		
 		for p in ports_for_host:
-			p.delete()
+			self.db.session().delete(p)
 					
 		self.db.commit()
 
 	def getHostInformation(self, hostIP):
-		return nmap_host.query.filter_by(ip=str(hostIP)).first()
+		return self.db.session().query(nmap_host).filter_by(ip=str(hostIP)).first()
 
 	def getPortStatesForHost(self,hostID):
-		tmp_query = ('SELECT port.state FROM db_tables_nmap_port as port WHERE port.host_id=?')
-		return metadata.bind.execute(tmp_query, str(hostID)).fetchall()
+		tmp_query = ('SELECT port.state FROM nmap_port as port WHERE port.host_id=?')
+		return self.db.metadata.bind.execute(tmp_query, str(hostID)).fetchall()
 
 	def getHostsAndPortsForServiceFromDB(self, serviceName, filters):
 		
-		tmp_query = ('SELECT hosts.ip,ports.port_id,ports.protocol,ports.state,ports.host_id,ports.service_id,services.name,services.product,services.version,services.extrainfo,services.fingerprint FROM db_tables_nmap_port AS ports ' +
-			'INNER JOIN db_tables_nmap_host AS hosts ON hosts.id = ports.host_id ' +
-			'LEFT OUTER JOIN db_tables_nmap_service AS services ON services.id=ports.service_id ' +
+		tmp_query = ('SELECT hosts.ip,ports.port_id,ports.protocol,ports.state,ports.host_id,ports.service_id,services.name,services.product,services.version,services.extrainfo,services.fingerprint FROM nmap_port AS ports ' +
+			'INNER JOIN nmap_host AS hosts ON hosts.id = ports.host_id ' +
+			'LEFT OUTER JOIN nmap_service AS services ON services.id=ports.service_id ' +
 			'WHERE services.name=?')
 
 		if filters.down == False:
@@ -330,131 +331,142 @@ class Logic():
 		for word in filters.keywords:
 			tmp_query += ' AND (hosts.ip LIKE \'%'+sanitise(word)+'%\' OR hosts.os_match LIKE \'%'+sanitise(word)+'%\' OR hosts.hostname LIKE \'%'+sanitise(word)+'%\')'
 
-		return metadata.bind.execute(tmp_query, str(serviceName)).fetchall()
+		return self.db.metadata.bind.execute(tmp_query, str(serviceName)).fetchall()
 
 	# this function returns all the processes from the DB
 	# the showProcesses flag is used to ensure we don't display processes in the process table after we have cleared them or when an existing project is opened.
 	# to speed up the queries we replace the columns we don't need by zeros (the reason we need all the columns is we are using the same model to display process information everywhere)
 	def getProcessesFromDB(self, filters, showProcesses=''):
 		if showProcesses == '':											# we do not fetch nmap processes because these are not displayed in the host tool tabs / tools
-			tmp_query = ('SELECT "0", "0", "0", process.name, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" FROM db_tables_process AS process WHERE process.closed="False" AND process.name!="nmap" group by process.name')
-			result = metadata.bind.execute(tmp_query).fetchall()
+			tmp_query = ('SELECT "0", "0", "0", process.name, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" FROM process AS process WHERE process.closed="False" AND process.name!="nmap" group by process.name')
+			result = self.db.metadata.bind.execute(tmp_query).fetchall()
 
 		elif showProcesses == False:									# when opening a project, fetch only the processes that have display=false and were not in tabs that were closed by the user
-			tmp_query = ('SELECT process.id, process.hostip, process.tabtitle, process.outputfile, poutput.output FROM db_tables_process AS process '
-			'INNER JOIN db_tables_process_output AS poutput ON process.id = poutput.process_id '
+			tmp_query = ('SELECT process.id, process.hostip, process.tabtitle, process.outputfile, poutput.output FROM process AS process '
+			'INNER JOIN process_output AS poutput ON process.id = poutput.process_id '
 			'WHERE process.display=? AND process.closed="False" order by process.id desc')
-			result = metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
+			result = self.db.metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
 
 		else:															# show all the processes in the (bottom) process table (no matter their closed value)
-			tmp_query = ('SELECT * FROM db_tables_process AS process WHERE process.display=? order by id desc')
-			result = metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
+			tmp_query = ('SELECT * FROM process AS process WHERE process.display=? order by id desc')
+			result = self.db.metadata.bind.execute(tmp_query, str(showProcesses)).fetchall()
 
 		return result
 
 	def getHostsForTool(self, toolname, closed='False'):
 		if closed == 'FetchAll':
-			tmp_query = ('SELECT "0", "0", "0", "0", "0", process.hostip, process.port, process.protocol, "0", "0", process.outputfile, "0", "0", "0" FROM db_tables_process AS process WHERE process.name=?')
+			tmp_query = ('SELECT "0", "0", "0", "0", "0", process.hostip, process.port, process.protocol, "0", "0", process.outputfile, "0", "0", "0" FROM process AS process WHERE process.name=?')
 		else:
-			tmp_query = ('SELECT process.id, "0", "0", "0", "0", process.hostip, process.port, process.protocol, "0", "0", process.outputfile, "0", "0", "0" FROM db_tables_process AS process WHERE process.name=? and process.closed="False"')
+			tmp_query = ('SELECT process.id, "0", "0", "0", "0", process.hostip, process.port, process.protocol, "0", "0", process.outputfile, "0", "0", "0" FROM process AS process WHERE process.name=? and process.closed="False"')
 			
-		return metadata.bind.execute(tmp_query, str(toolname)).fetchall()
+		return self.db.metadata.bind.execute(tmp_query, str(toolname)).fetchall()
 
 	def getProcessStatusForDBId(self, dbid):
-		tmp_query = ('SELECT process.status FROM db_tables_process AS process WHERE process.id=?')
-		p = metadata.bind.execute(tmp_query, str(dbid)).fetchall()
+		tmp_query = ('SELECT process.status FROM process AS process WHERE process.id=?')
+		p = self.db.metadata.bind.execute(tmp_query, str(dbid)).fetchall()
  		if p:
  			return p[0][0]
 		return -1
 		
 	def getPidForProcess(self, procid):
-		tmp_query = ('SELECT process.pid FROM db_tables_process AS process WHERE process.id=?')
-		p = metadata.bind.execute(tmp_query, str(procid)).fetchall()		
+		tmp_query = ('SELECT process.pid FROM process AS process WHERE process.id=?')
+		p = self.db.metadata.bind.execute(tmp_query, str(procid)).fetchall()		
 		if p:
 			return p[0][0]
 		return -1
 
 	def toggleHostCheckStatus(self, ipaddr):
-		h = nmap_host.query.filter_by(ip=ipaddr).first()
+		h = self.db.session().query(nmap_host).filter_by(ip=ipaddr).first()
 		if h:
 			if h.checked == 'False':
 				h.checked = 'True'
 			else:
 				h.checked = 'False'
+
+			self.db.session().add(h)
 			self.db.commit()
 
 	# this function adds a new process to the DB
 	def addProcessToDB(self, proc):
-		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), proc.starttime, "", str(proc.outputfile), 'Waiting', p_output)
+		print "[DEBUG] Adding process to DB: " + str(proc.name)
+		p = process(str(proc.pid()), str(proc.name), str(proc.tabtitle), str(proc.hostip), str(proc.port), str(proc.protocol), unicode(proc.command), proc.starttime, "", str(proc.outputfile), 'Waiting', [process_output()])
+		self.db.session().add(p)
 		self.db.commit()
 		proc.id = p.id
 		return p.id
 	
 	def addScreenshotToDB(self, ip, port, filename):
-		p_output = process_output()										# add row to process_output table (separate table for performance reasons)
-		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", getTimestamp(True), getTimestamp(True), str(filename), "Finished", p_output)
+		p = process("-2", "screenshooter", "screenshot ("+str(port)+"/tcp)", str(ip), str(port), "tcp", "", getTimestamp(True), getTimestamp(True), str(filename), "Finished", [process_output()])
+		self.db.session().add(p)
 		self.db.commit()
 		return p.id
 		
 	# is not actually a toggle function. it sets all the non-running processes display flag to false to ensure they aren't shown in the process table 
 	# but they need to be shown as tool tabs. this function is called when a user clears the processes or when a project is being closed.
 	def toggleProcessDisplayStatus(self, resetAll=False):
-		proc = process.query.filter_by(display='True').all()
+		proc = self.db.session().query(process).filter_by(display='True').all()
 		if resetAll == True:
 			for p in proc:
 				if p.status != 'Running':
 					p.display = 'False'
+					self.db.session().add(p)
 		else:
 			for p in proc:
 				if p.status != 'Running' and p.status != 'Waiting':
 					p.display = 'False'
+					self.db.session().add(p)
 		self.db.commit()
 		
 	# this function updates the status of a process if it is killed
 	def storeProcessKillStatusInDB(self, procId):
-		proc = process.query.filter_by(id=procId).first()
+		proc = self.db.session().query(process).filter_by(id=procId).first()
 		if proc and not proc.status == 'Finished':
 			proc.status = 'Killed'
 			proc.endtime = getTimestamp(True)	# store end time
+			self.db.session().add(proc)
 			self.db.commit()
 
 	def storeProcessCrashStatusInDB(self, procId):
-		proc = process.query.filter_by(id=procId).first()
+		proc = self.db.session().query(process).filter_by(id=procId).first()
 		if proc and not proc.status == 'Killed' and not proc.status == 'Cancelled':
 			proc.status = 'Crashed'
 			proc.endtime = getTimestamp(True)	# store end time
+			self.db.session().add(proc)
 			self.db.commit()
 			
 	# this function updates the status of a process if it is killed
 	def storeProcessCancelStatusInDB(self, procId):
-		proc = process.query.filter_by(id=procId).first()
+		proc = self.db.session().query(process).filter_by(id=procId).first()
 		if proc:
 			proc.status = 'Cancelled'
 			proc.endtime = getTimestamp(True)	# store end time
+			self.db.session().add(proc)
 			self.db.commit()
 
 	def storeProcessRunningStatusInDB(self, procId, pid):
-		proc = process.query.filter_by(id=procId).first()
+		proc = self.db.session().query(process).filter_by(id=procId).first()
 		if proc:
 			proc.status = 'Running'
 			proc.pid = str(pid)
+			self.db.session().add(proc)
 			self.db.commit()
 
 	# change the status in the db as closed
 	def storeCloseTabStatusInDB(self, procId):
-		proc = process.query.filter_by(id=int(procId)).first()
+		proc = self.db.session().query(process).filter_by(id=int(procId)).first()
 		if proc:
 			proc.closed = 'True'
+			self.db.session().add(proc)
 			self.db.commit()
 	
 	# this function stores a finished process' output to the DB and updates it status
 	def storeProcessOutputInDB(self, procId, output):
-		proc = process.query.filter_by(id=procId).first()
+		proc = self.db.session().query(process).filter_by(id=procId).first()
 		if proc:
-			proc_output = process_output.query.filter_by(process_id=procId).first()
+			proc_output = self.db.session().query(process_output).filter_by(process_id=procId).first()
 			if proc_output:
 				proc_output.output=unicode(output)
+				self.db.session().add(proc_output)
 
 			proc.endtime = getTimestamp(True)	# store end time
 
@@ -463,23 +475,31 @@ class Logic():
 				return True							
 			else:
 				proc.status = 'Finished'
+				self.db.session().add(proc)
 				self.db.commit()
 
 	def storeNotesInDB(self, hostId, notes):
-		note = self.getNoteFromDB(hostId)
-		note.text = unicode(notes)
+		db_note = self.getNoteFromDB(hostId)
+				
+		if db_note is not None:
+			db_note.text = unicode(notes)
+		
+		else:
+			db_note = note(int(hostId), unicode(notes))
+		
+		self.db.session().add(db_note)
 		self.db.commit()
 		
 	def isKilledProcess(self, procId):
-		tmp_query = ('SELECT process.status FROM db_tables_process AS process WHERE process.id=?')
-		proc = metadata.bind.execute(tmp_query, str(procId)).fetchall()
+		tmp_query = ('SELECT process.status FROM process AS process WHERE process.id=?')
+		proc = self.db.metadata.bind.execute(tmp_query, str(procId)).fetchall()
 		if not proc or str(proc[0][0]) == "Killed":
 			return True
 		return False
 		
 	def isCanceledProcess(self, procId):
-		tmp_query = ('SELECT process.status FROM db_tables_process AS process WHERE process.id=?')
-		proc = metadata.bind.execute(tmp_query, str(procId)).fetchall()
+		tmp_query = ('SELECT process.status FROM process AS process WHERE process.id=?')
+		proc = self.db.metadata.bind.execute(tmp_query, str(procId)).fetchall()
 		if not proc or str(proc[0][0]) == "Cancelled":
 			return True
 		return False
@@ -509,6 +529,7 @@ class NmapImporter(QtCore.QThread):
 			
 			try:
 				parser = Parser(self.filename)
+			
 			except:
 				print '\t[-] Giving up on import due to previous errors.'
 				print "\t[-] Unexpected error:", sys.exc_info()[0]
@@ -518,79 +539,93 @@ class NmapImporter(QtCore.QThread):
 			self.db.dbsemaphore.acquire()								# ensure that while this thread is running, no one else can write to the DB
 			s = parser.get_session()									# nmap session info
 			if s:
-				nmap_session(self.filename, s.start_time, s.finish_time, s.nmap_version, s.scan_args, s.total_hosts, s.up_hosts, s.down_hosts)
+				n = nmap_session(self.filename, s.start_time, s.finish_time, s.nmap_version, s.scan_args, s.total_hosts, s.up_hosts, s.down_hosts)
+				self.db.session().add(n)
+
 			hostCount = len(parser.all_hosts())
+
 			if hostCount==0:											# to fix a division by zero if we ran nmap on one host
 				hostCount=1
+
 			progress = 100.0 / hostCount
 			totalprogress = 0
 			self.tick.emit(int(totalprogress))
 	
 			for h in parser.all_hosts():								# create all the hosts that need to be created
-				db_host = nmap_host.query.filter_by(ip=h.ip).first()
+				db_host = self.db.session().query(nmap_host).filter_by(ip=h.ip).first()
 				
 				if not db_host:											# if host doesn't exist in DB, create it first
 					hid = nmap_host('', '', h.ip, h.ipv4, h.ipv6, h.macaddr, h.status, h.hostname, h.vendor, h.uptime, h.lastboot, h.distance, h.state, h.count)
-					note(hid, '')
+					self.db.session().add(hid)
+					host_note = note(hid.id, '')
+					self.db.session().add(host_note)
+					
 
-			session.commit()
+			self.db.session().commit()
 			
 			for h in parser.all_hosts():								# create all OS, service and port objects that need to be created
 
-				db_host = nmap_host.query.filter_by(ip=h.ip).first()	# fetch the host
+				db_host = self.db.session().query(nmap_host).filter_by(ip=h.ip).first()	# fetch the host
 				
 				os_nodes = h.get_OS()									# parse and store all the OS nodes
 				for os in os_nodes:
-					db_os = nmap_os.query.filter_by(host_id=db_host.id).filter_by(name=os.name).filter_by(family=os.family).filter_by(generation=os.generation).filter_by(os_type=os.os_type).filter_by(vendor=os.vendor).first()
+					db_os = self.db.session().query(nmap_os).filter_by(host_id=db_host.id).filter_by(name=os.name).filter_by(family=os.family).filter_by(generation=os.generation).filter_by(os_type=os.os_type).filter_by(vendor=os.vendor).first()
 					
 					if not db_os:
-						nmap_os(os.name, os.family, os.generation, os.os_type, os.vendor, os.accuracy, db_host)
+						host_os = nmap_os(os.name, os.family, os.generation, os.os_type, os.vendor, os.accuracy, db_host.id)
+						self.db.session().add(host_os)
+
+				self.db.session().commit()
 
 				for p in h.all_ports():									# parse the ports
 					s = p.get_service()
 
 					if not (s is None):									# check if service already exists to avoid adding duplicates
-						db_service = nmap_service.query.filter_by(name=s.name).filter_by(product=s.product).filter_by(version=s.version).filter_by(extrainfo=s.extrainfo).filter_by(fingerprint=s.fingerprint).first()
+						db_service = self.db.session().query(nmap_service).filter_by(name=s.name).filter_by(product=s.product).filter_by(version=s.version).filter_by(extrainfo=s.extrainfo).filter_by(fingerprint=s.fingerprint).first()
 						
 						if not db_service:
 							db_service = nmap_service(s.name, s.product, s.version, s.extrainfo, s.fingerprint)
+							self.db.session().add(db_service)
 
 					else:												# else, there is no service info to parse
 						db_service = None					
 																		# fetch the port
-					db_port = nmap_port.query.filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()
+					db_port = self.db.session().query(nmap_port).filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()
 					
 					if not db_port:		
-						db_port = nmap_port(p.portId, p.protocol, p.state, db_host, db_service)
+						db_port = nmap_port(p.portId, p.protocol, p.state, db_host.id, db_service.id)
+						self.db.session().add(db_port)
 
-			session.commit()
+			self.db.session().commit()
 			
 			totalprogress += progress
 			self.tick.emit(int(totalprogress))
 
 			for h in parser.all_hosts():								# create all script objects that need to be created
 				
-				db_host = nmap_host.query.filter_by(ip=h.ip).first()
+				db_host = self.db.session().query(nmap_host).filter_by(ip=h.ip).first()
 				
 				for p in h.all_ports():
 					for scr in p.get_scripts():
 												
-						db_port = nmap_port.query.filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()
-						db_script = nmap_script.query.filter_by(script_id=scr.scriptId).filter_by(port_id=db_port.id).first()
+						db_port = self.db.session().query(nmap_port).filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()
+						db_script = self.db.session().query(nmap_script).filter_by(script_id=scr.scriptId).filter_by(port_id=db_port.id).first()
 
 						if not db_script:								# if this script object doesn't exist, create it
-							nmap_script(scr.scriptId, scr.output, db_port, db_host)
+							port_script = nmap_script(scr.scriptId, scr.output, db_port.id, db_host.id)
+							self.db.session().add(port_script)
 					
 				for hs in h.get_hostscripts():
-					db_script = nmap_script.query.filter_by(script_id=hs.scriptId).filter_by(host_id=db_host.id).first()
+					db_script = self.db.session().query(nmap_script).filter_by(script_id=hs.scriptId).filter_by(host_id=db_host.id).first()
 					if not db_script:
-						nmap_script(hs.scriptId, hs.output, None, db_host)					
+						port_script = nmap_script(hs.scriptId, hs.output, None, db_host.id)
+						self.db.session().add(port_script)
 					
-			session.commit()
+			self.db.session().commit()
 					
 			for h in parser.all_hosts():								# update everything
 
-				db_host = nmap_host.query.filter_by(ip=h.ip).first()	# get host from DB (if any with the same IP address)
+				db_host = self.db.session().query(nmap_host).filter_by(ip=h.ip).first()	# get host from DB (if any with the same IP address)
 				
 				if db_host.ipv4 == '' and not h.ipv4 == '':
 					db_host.ipv4 = h.ipv4
@@ -614,13 +649,15 @@ class NmapImporter(QtCore.QThread):
 					db_host.state = h.state
 				if db_host.count == '' and not h.count == '':
 					db_host.count = h.count
+
+				self.db.session().add(db_host)
 						
 				tmp_name = ''
 				tmp_accuracy = '0' 										# TODO: check if better to convert to int for comparison
 				
 				os_nodes = h.get_OS()
 				for os in os_nodes:
-					db_os = nmap_os.query.filter_by(host_id=db_host.id).filter_by(name=os.name).filter_by(family=os.family).filter_by(generation=os.generation).filter_by(os_type=os.os_type).filter_by(vendor=os.vendor).first()
+					db_os = self.db.session().query(nmap_os).filter_by(host_id=db_host.id).filter_by(name=os.name).filter_by(family=os.family).filter_by(generation=os.generation).filter_by(os_type=os.os_type).filter_by(vendor=os.vendor).first()
 					
 					db_os.os_accuracy = os.accuracy						# update the accuracy
 							
@@ -634,37 +671,42 @@ class NmapImporter(QtCore.QThread):
 					if not tmp_name == '' and not tmp_accuracy == '0':	# update the current host with the most accurate OS match
 						db_host.os_match = tmp_name
 						db_host.os_accuracy = tmp_accuracy
-								
+						self.db.session().add(db_host)
+
 				for p in h.all_ports():		
 					s = p.get_service()
 					if not (s is None):
 																		# fetch the service for this port
-						db_service = nmap_service.query.filter_by(name=s.name).filter_by(product=s.product).filter_by(version=s.version).filter_by(extrainfo=s.extrainfo).filter_by(fingerprint=s.fingerprint).first()
+						db_service = self.db.session().query(nmap_service).filter_by(name=s.name).filter_by(product=s.product).filter_by(version=s.version).filter_by(extrainfo=s.extrainfo).filter_by(fingerprint=s.fingerprint).first()
 					else:
 						db_service = None						
 																		# fetch the port
-					db_port = nmap_port.query.filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()					
+					db_port = self.db.session().query(nmap_port).filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()					
 					db_port.state = p.state
+					self.db.session().add(db_port)
 					
 					if not (db_service is None):						# if there is some new service information, update it
 						db_port.service_id = db_service.id
+						self.db.session().add(db_port)
 				
 					for scr in p.get_scripts():							# store the script results (note that existing script outputs are also kept)	
-						db_script = nmap_script.query.filter_by(script_id=scr.scriptId).filter_by(port_id=db_port.id).first()
+						db_script = self.db.session().query(nmap_script).filter_by(script_id=scr.scriptId).filter_by(port_id=db_port.id).first()
 
 						if not scr.output == '':
 							db_script.output = scr.output
+							self.db.session().add(db_script)
 				
 				totalprogress += progress
 				self.tick.emit(int(totalprogress))		
 
-			session.commit()
+			self.db.session().commit()
 			self.db.dbsemaphore.release()								# we are done with the DB
 			print '\t[+] Finished in '+ str(time.time()-starttime) + ' seconds.'
 			self.done.emit()
 			self.schedule.emit(parser, self.output == '')				# call the scheduler (if there is no terminal output it means we imported nmap)
 			
-		except:
+		except Exception as e:
 			print '\t[-] Something went wrong when parsing the nmap file..'
 			print "\t[-] Unexpected error:", sys.exc_info()[0]
+			print str(e)
 			self.done.emit()

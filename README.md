@@ -22,13 +22,10 @@ Requirements
 
 It is recommended that Kali Linux is used as it already has most tools installed, however SPARTA would most likely also work in Debian based systems.
 
-Kali (preferred):
+Kali 2020:
 
-    apt-get install python-elixir python-pyside.qtwebkit wkhtmltopdf
+    apt-get install python-pyside.qtwebkit wkhtmltopdf
 
-Ubuntu 12.04+ (untested)
-
-    apt-get install python-elixir python-qt4 xsltproc wkhtmltopdf
 
 Other than these, the following tools are required for SPARTA to have its minimum functionality:
 - nmap (for adding hosts)
