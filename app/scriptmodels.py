@@ -12,8 +12,8 @@ Copyright (c) 2014 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 '''
 
 import re
-from PyQt4 import QtGui, QtCore
-from auxiliary import *        											# for bubble sort
+from PyQt5 import QtGui, QtCore
+from app.auxiliary import sortArrayWithArray
 
 class ScriptsTableModel(QtCore.QAbstractTableModel):
     
@@ -33,7 +33,7 @@ class ScriptsTableModel(QtCore.QAbstractTableModel):
         return len(self.__scripts)
 
     def columnCount(self, parent):
-        if not len(self.__scripts) is 0:
+        if len(self.__scripts) != 0:
             return len(self.__scripts[0])
         return 0
 
@@ -45,29 +45,29 @@ class ScriptsTableModel(QtCore.QAbstractTableModel):
                 else:
                     return "not implemented"
                 
-    def data(self, index, role):										# this method takes care of how the information is displayed
+    def data(self, index, role):                                        # this method takes care of how the information is displayed
 
-		if role == QtCore.Qt.DisplayRole:								# how to display each cell
-			value = ''
-			row = index.row()
-			column = index.column()
+        if role == QtCore.Qt.DisplayRole:                               # how to display each cell
+            value = ''
+            row = index.row()
+            column = index.column()
 
-			if column == 0:
-				value = self.__scripts[row]['id']        
-			elif column == 1:
-				value = self.__scripts[row]['script_id']
-			elif column == 2:
-				if self.__scripts[row]['port_id'] and self.__scripts[row]['protocol'] and not self.__scripts[row]['port_id'] == '' and not self.__scripts[row]['protocol'] == '':
-					value = self.__scripts[row]['port_id'] + '/' + self.__scripts[row]['protocol']				
-				else:
-					value = ''
-			elif column == 3:
-				value = self.__scripts[row]['protocol']
-			return value
+            if column == 0:
+                value = self.__scripts[row]['id']        
+            elif column == 1:
+                value = self.__scripts[row]['script_id']
+            elif column == 2:
+                if self.__scripts[row]['port_id'] and self.__scripts[row]['protocol'] and not self.__scripts[row]['port_id'] == '' and not self.__scripts[row]['protocol'] == '':
+                    value = self.__scripts[row]['port_id'] + '/' + self.__scripts[row]['protocol']              
+                else:
+                    value = ''
+            elif column == 3:
+                value = self.__scripts[row]['protocol']
+            return value
                     
 
     def sort(self, Ncol, order):
-        self.emit(SIGNAL("layoutAboutToBeChanged()"))
+        self.layoutAboutToBeChanged.emit()
         array=[]
         
         if Ncol == 1:            
@@ -77,17 +77,17 @@ class ScriptsTableModel(QtCore.QAbstractTableModel):
             for i in range(len(self.__scripts)):
                 array.append(int(self.__scripts[i]['port_id']))
 
-        sortArrayWithArray(array, self.__scripts)						# sort the services based on the values in the array
+        sortArrayWithArray(array, self.__scripts)                       # sort the services based on the values in the array
 
-        if order == Qt.AscendingOrder:									# reverse if needed
+        if order == QtCore.Qt.AscendingOrder:                                  # reverse if needed
             self.__scripts.reverse()
             
-        self.emit(SIGNAL("layoutChanged()"))
+        self.layoutChanged.emit()
 
-    def flags(self, index):												# method that allows views to know how to treat each item, eg: if it should be enabled, editable, selectable etc
+    def flags(self, index):                                             # method that allows views to know how to treat each item, eg: if it should be enabled, editable, selectable etc
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
-	### getter functions ###
+    ### getter functions ###
 
     def getScriptDBIdForRow(self, row):
         return self.__scripts[row]['id']
