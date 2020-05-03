@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 '''
-SPARTA - Network Infrastructure Penetration Testing Tool (http://sparta.secforce.com)
+SPARTA - Network Infrastructure Penetration Testing Tool
+(http://sparta.secforce.com)
 Copyright (c) 2020 SECFORCE (Antonio Quina and Leonidas Stavliotis)
 
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -18,12 +19,12 @@ import signal
 import re
 import subprocess
 import queue
-#from PyQt5.QtGui import *       # for filters dialog
 from PyQt5.QtWidgets import QMenu, QApplication
 from PyQt5.QtCore import QProcess, QTimer, QVariant, Qt
-from app.logic import Logic, NmapImporter
+from app.logic import NmapImporter
 from app.auxiliary import MyQProcess, Screenshooter, BrowserOpener, getTimestamp
 from app.settings import Settings, AppSettings
+
 
 class Controller():
 
@@ -45,7 +46,6 @@ class Controller():
     def start(self, title='*untitled'):
         self.processes = []                                             # to store all the processes we run (nmaps, niktos, etc)
         self.fastProcessQueue = queue.Queue()                           # to manage fast processes (banner, snmpenum, etc)
-        #self.slowProcessQueue = queue.Queue()                          # to manage slow processes (dirbuster, hydra, etc)
         self.fastProcessesRunning = 0                                   # counts the number of fast processes currently running
         self.slowProcessesRunning = 0                                   # counts the number of slow processes currently running
         self.nmapImporter.setDB(self.logic.db)                          # tell nmap importer which db to use
@@ -260,7 +260,7 @@ class Controller():
                     name = 'nmap'
                     invisibleTab = True                 
                                                                         # remove all chars that are not alphanumeric from tool name (used in the outputfile's name)
-                outputfile = self.logic.runningfolder+"/"+re.sub("[^0-9a-zA-Z]", "", str(name))+"/"+getTimestamp()+"-"+re.sub("[^0-9a-zA-Z]", "", str(self.settings.hostActions[i][1]))+"-"+ip  
+                outputfile = self.logic.runningfolder+"/"+re.sub("[^0-9a-zA-Z]", "", str(name))+"/"+getTimestamp()+"-"+re.sub("[^0-9a-zA-Z]", "", str(self.settings.hostActions[i][1]))+"-"+ip
                 command = str(self.settings.hostActions[i][2])
                 command = command.replace('[IP]', ip).replace('[OUTPUT]', outputfile)
                                                                         # check if same type of nmap scan has already been made and purge results before scanning
@@ -275,7 +275,7 @@ class Controller():
                 tabtitle = self.settings.hostActions[i][1]
                 self.runCommand(name, tabtitle, ip, '','', command, getTimestamp(True), outputfile, self.view.createNewTabForHost(ip, tabtitle, invisibleTab))
                 break
-        
+
     def getContextMenuForServiceName(self, serviceName='*', menu=None):
         if menu == None:                                                # if no menu was given, create a new one
             menu = QMenu()
@@ -285,7 +285,7 @@ class Controller():
             menu.addAction("Take screenshot")
 
         actions = []
-        for a in self.settings.portActions:         
+        for a in self.settings.portActions:
             if serviceName is None or serviceName == '*' or serviceName in a[3].split(",") or a[3] == '':   # if the service name exists in the portActions list show the command in the context menu
                 actions.append([self.settings.portActions.index(a), menu.addAction(a[0])])  # in actions list write the service and line number that corresponds to it in portActions
 
@@ -513,7 +513,7 @@ class Controller():
     # this function creates a new process, runs the command and takes care of displaying the ouput. returns the PID
     # the last 3 parameters are only used when the command is a staged nmap
     def runCommand(self, name, tabtitle, hostip, port, protocol, command, starttime, outputfile, textbox, discovery=True, stage=0, stop=False):
-        #print("[+] Running: " + command)
+        print("[DEBUG] Running: " + command)
         self.logic.createFolderForTool(name)                            # create folder for tool if necessary
         qProcess = MyQProcess(name, tabtitle, hostip, port, protocol, command, starttime, outputfile, textbox)
         textbox.setProperty('dbId', QVariant(str(self.logic.addProcessToDB(qProcess)))) # database id for the process is stored so that we can retrieve the widget later (in the tools tab)
