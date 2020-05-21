@@ -598,7 +598,11 @@ class NmapImporter(QtCore.QThread):
                     db_port = self.db.session().query(nmap_port).filter_by(host_id=db_host.id).filter_by(port_id=p.portId).filter_by(protocol=p.protocol).first()
                     
                     if not db_port:     
-                        db_port = nmap_port(p.portId, p.protocol, p.state, db_host.id, db_service.id)
+                        if db_service:
+                            db_port = nmap_port(p.portId, p.protocol, p.state, db_host.id, db_service.id)
+                        else:
+                            db_port = nmap_port(p.portId, p.protocol, p.state, db_host.id, '')
+
                         self.db.session().add(db_port)
 
             self.db.session().commit()
