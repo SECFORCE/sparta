@@ -18,6 +18,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from PyQt5.QtCore import QSemaphore
 #from tables import *
 import time
+# temp
+import threading
 
 Base = declarative_base()
 
@@ -46,7 +48,7 @@ class Database:
     def connect(self, dbfilename):
         self.name = dbfilename
         self.dbsemaphore = QSemaphore(1)                            # to control concurrent write access to db
-        self.engine = create_engine('sqlite:///'+dbfilename)
+        self.engine = create_engine('sqlite:///'+dbfilename, connect_args={"check_same_thread": False})
         self.session = scoped_session(sessionmaker())
         self.session.configure(bind=self.engine, autoflush=False)
         self.metadata = Base.metadata
