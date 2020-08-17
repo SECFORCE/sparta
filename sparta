@@ -1,2 +1,2 @@
 #!/bin/bash
-cd /usr/share/sparta/ && python sparta.py
+cd /usr/share/sparta/ && /usr/bin/env python3 sparta.py

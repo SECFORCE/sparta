@@ -1,15 +1,23 @@
-SPARTA 1.0.1 (BETA)
+2.0
+* made xterm the default terminal
+* ported from python2 to python3
+* ported from pyqt4 to pyqt5
+* removed python-elixir dependency
 
-* added tool rdp-sec-check.pl to rdp service (credit to Portcullis Labs - http://labs.portcullis.co.uk/application/rdp-sec-check/)
-* added tool WhatWeb to web services (thanks @_bcoles)
-* added the screenshooter to automated attacks (thanks @harmj0y)
-* added setting to run automated attacks after nmap imports (off by default)
-* fixed a unicode bug (thanks Dmitry Boomov)
-* fixed another unicode bug in the tool output
-* fixed bug in the sort function (thanks ad0nis)
-* added content to the help menu
+1.0.5
+* implemented two command line options (--target and --file)
+* dropped cutycapt in favour of wkhtmltoimage
 
-SPARTA 1.0.2 (BETA)
+1.0.4 (BETA)
+* removed QtWebKit dependency for displaying the help menu
+* improved HTTPS/HTTP detection (experimental)
+* removed MS08-067 check from smbenum.sh
+
+1.0.3 (BETA)
+* fixed the QtWebKit import error (thx alexxn)
+* fixed ms08-067_check import issue (thx chris948)
+
+1.0.2 (BETA)
 * fixed elixir import issue caused by sqlalchemy Scoped_Session rename
 * fixed bug where tool output from automated attacks wasn't being stored correctly (thx jljansen)
 * edited smbenum.sh to allow choosing of a network interface (thx adamziaja)
@@ -18,11 +26,12 @@ SPARTA 1.0.2 (BETA)
 * nmap output is now also stored in HTML (thx mcjon3z)
 * added an "end time" column to the process table (thx ad0nis)
 
-SPARTA 1.0.3 (BETA)
-* fixed the QtWebKit import error (thx alexxn)
-* fixed ms08-067_check import issue (thx chris948)
-
-SPARTA 1.0.4 (BETA)
-* removed QtWebKit dependency for displaying the help menu
-* improved HTTPS/HTTP detection (experimental)
-* removed MS08-067 check from smbenum.sh
+1.0.1 (BETA)
+* added tool rdp-sec-check.pl to rdp service (credit to Portcullis Labs - http://labs.portcullis.co.uk/application/rdp-sec-check/)
+* added tool WhatWeb to web services (thanks @_bcoles)
+* added the screenshooter to automated attacks (thanks @harmj0y)
+* added setting to run automated attacks after nmap imports (off by default)
+* fixed a unicode bug (thanks Dmitry Boomov)
+* fixed another unicode bug in the tool output
+* fixed bug in the sort function (thanks ad0nis)
+* added content to the help menu
