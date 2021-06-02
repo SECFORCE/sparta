@@ -30,7 +30,7 @@ class HostsTableModel(QtCore.QAbstractTableModel):
         return len(self.__hosts)
 
     def columnCount(self, parent):
-        if not len(self.__hosts) is 0:
+        if len(self.__hosts) != 0:
             return len(self.__hosts[0])
         return 0
         
